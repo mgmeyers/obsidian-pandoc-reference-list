@@ -106,10 +106,7 @@ export class ReferenceListView extends ItemView {
       }
 
       bib.findAll('.csl-entry').forEach((e) => {
-        const id = e.id;
-        const citeKey = id ? ` @${id.split('-').pop()}` : '';
-
-        e.setAttribute('aria-label', `Click to copy${citeKey}`);
+        e.setAttribute('aria-label', 'Click to copy');
 
         const leafRoot = this.leaf.getRoot();
         if (leafRoot) {
