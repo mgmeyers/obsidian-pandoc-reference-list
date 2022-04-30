@@ -93,7 +93,10 @@ export class ReferenceListView extends ItemView {
       }
 
       bib.findAll('.csl-entry').forEach((e) => {
-        e.setAttribute('aria-label', 'Click to Copy');
+        const id = e.id;
+        const citeKey = id ? ` @${id.split('-').pop()}` : '';
+
+        e.setAttribute('aria-label', `Click to copy${citeKey}`);
         e.onClickEvent(() => {
           this.copyToClipboard(e);
         });
