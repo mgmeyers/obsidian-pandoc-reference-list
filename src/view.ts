@@ -1,4 +1,4 @@
-import { ItemView, MarkdownView, setIcon, WorkspaceLeaf } from 'obsidian';
+import { ItemView, MarkdownView, WorkspaceLeaf, setIcon } from 'obsidian';
 
 import ReferenceList from './main';
 import { ViewManager } from './viewManager';
@@ -48,6 +48,11 @@ export class ReferenceListView extends ItemView {
   }
 
   processReferences = () => {
+    this.contentEl.toggleClass(
+      'collapsed-links',
+      !!this.plugin.settings.hideLinks
+    );
+
     if (!this.plugin.settings.pathToPandoc) {
       return this.setMessage(
         'Please provide the path to pandoc in the Pandoc Reference List plugin settings.'
@@ -75,20 +80,48 @@ export class ReferenceListView extends ItemView {
     }
   };
 
+  copyToClipboard(el: HTMLElement) {
+    require('electron').clipboard.writeHTML(el.outerHTML);
+  }
+
   setViewContent(bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
       if (this.plugin.settings.hideLinks) {
         bib.findAll('a').forEach((l) => {
           l.setAttribute('aria-label', l.innerText);
-          setIcon(l, 'link');
         });
       }
 
-      this.contentEl.empty();
-      this.contentEl.createDiv({
-        cls: 'pwc-reference-list__title',
-        text: this.getDisplayText(),
+      bib.findAll('.csl-entry').forEach((e) => {
+        e.setAttribute('aria-label', 'Click to Copy');
+        e.onClickEvent(() => {
+          this.copyToClipboard(e);
+        });
       });
+
+      this.contentEl.empty();
+      this.contentEl.createDiv(
+        {
+          cls: 'pwc-reference-list__title',
+        },
+        (div) => {
+          div.createDiv({ text: this.getDisplayText() });
+          setIcon(
+            div.createDiv(
+              {
+                cls: 'pwc-copy-list',
+                attr: {
+                  'aria-label': 'Copy list',
+                },
+              },
+              (btn) => {
+                btn.onClickEvent(() => this.copyToClipboard(bib));
+              }
+            ),
+            'select-all-text'
+          );
+        }
+      );
       this.contentEl.append(bib);
     } else if (!bib) {
       this.setNoContentMessage();

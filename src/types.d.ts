@@ -1,1 +1,1 @@
-declare module "shell-path";
+declare module 'shell-path';

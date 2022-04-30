@@ -1,10 +1,10 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian';
-import which from 'which';
 import { shellPath } from 'shell-path';
+import which from 'which';
 
+import { Emitter, createEmitter } from './emitter';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';
 import { ReferenceListView, viewType } from './view';
-import { createEmitter, Emitter } from './emitter';
 
 // TODO: ask @licat to do this?
 //       PATH is not populated by default on mac (and I think linux)

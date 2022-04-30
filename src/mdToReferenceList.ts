@@ -1,5 +1,6 @@
-import { execa } from 'execa';
 import path from 'path';
+
+import { execa } from 'execa';
 import which from 'which';
 
 import { ReferenceListSettings } from './settings';
@@ -12,7 +13,7 @@ export function areSetsEqual<T>(as: Set<T>, bs: Set<T>) {
 
 function resolveHome(filepath: string) {
   if (filepath[0] === '~' && process.env.HOME) {
-      return path.join(process.env.HOME, filepath.slice(1));
+    return path.join(process.env.HOME, filepath.slice(1));
   }
   return filepath;
 }
