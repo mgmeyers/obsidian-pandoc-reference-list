@@ -1,4 +1,5 @@
-import { PluginSettingTab, Setting } from 'obsidian';
+import { Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
+import which from 'which';
 
 import ReferenceList from './main';
 
@@ -25,53 +26,119 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName('Path to Bibliography File')
       .setDesc('The absolute path to your desired bibliography file.')
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.pathToBibliography)
-          .onChange(async (value) => {
-            this.plugin.settings.pathToBibliography = value;
-            await this.plugin.saveSettings();
-          })
-      );
+      .then((setting) => {
+        let input: TextComponent;
+        setting.addText((text) => {
+          input = text;
+          text
+            .setValue(this.plugin.settings.pathToBibliography)
+            .onChange((value) => {
+              this.plugin.settings.pathToBibliography = value;
+              this.plugin.saveSettings();
+            });
+        });
+
+        setting.addExtraButton((b) => {
+          b.setIcon('folder');
+          b.setTooltip('Select a bibliography file');
+          b.onClick(() => {
+            const path = require('electron').remote.dialog.showOpenDialogSync({
+              properties: ['openFile'],
+            });
+
+            if (path && path.length) {
+              input.setValue(path[0]);
+
+              this.plugin.settings.pathToBibliography = path[0];
+              this.plugin.saveSettings();
+            }
+          });
+        });
+      });
 
     new Setting(containerEl)
       .setName('Path or URL to CSL File')
       .setDesc(
         'The absolute path or URL your desired citation style file. Pandoc will default to Chicago Manual of Style if this is not set.'
       )
-      .addText((text) =>
-        text.setValue(this.plugin.settings.cslStyle).onChange(async (value) => {
-          this.plugin.settings.cslStyle = value;
-          await this.plugin.saveSettings();
-        })
-      );
+      .then((setting) => {
+        let input: TextComponent;
+        setting.addText((text) => {
+          input = text;
+          text.setValue(this.plugin.settings.cslStyle).onChange((value) => {
+            this.plugin.settings.cslStyle = value;
+            this.plugin.saveSettings();
+          });
+        });
+
+        setting.addExtraButton((b) => {
+          b.setIcon('folder');
+          b.setTooltip('Select a CSL file located on your computer');
+          b.onClick(() => {
+            const path = require('electron').remote.dialog.showOpenDialogSync({
+              properties: ['openFile'],
+            });
+
+            if (path && path.length) {
+              input.setValue(path[0]);
+
+              this.plugin.settings.cslStyle = path[0];
+              this.plugin.saveSettings();
+            }
+          });
+        });
+      });
 
     new Setting(containerEl)
-      .setName('Path to Pandoc')
+      .setName('Fallback Path to Pandoc')
       .setDesc(
-        "The absolute path to the pandoc executable. If this is not set automatically, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
+        "The absolute path to the pandoc executable. This plugin will attempt to locate pandoc for you and will use this path if it fails to do so. To find pandoc, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
       )
-      .addText((text) =>
-        text
-          .setValue(this.plugin.settings.pathToPandoc)
-          .onChange(async (value) => {
+      .then((setting) => {
+        let input: TextComponent;
+        setting.addText((text) => {
+          input = text;
+          text.setValue(this.plugin.settings.pathToPandoc).onChange((value) => {
             this.plugin.settings.pathToPandoc = value;
-            await this.plugin.saveSettings();
-          })
-      );
+            this.plugin.saveSettings();
+          });
+        });
 
-      new Setting(containerEl)
+        setting.addExtraButton((b) => {
+          b.setIcon('magnifying-glass');
+          b.setTooltip('Attempt to find pandoc automatically');
+          b.onClick(() => {
+            which('pandoc')
+              .then((pathToPandoc) => {
+                if (pathToPandoc) {
+                  input.setValue(pathToPandoc);
+
+                  this.plugin.settings.pathToPandoc = pathToPandoc;
+                  this.plugin.saveSettings();
+                } else {
+                  new Notice(
+                    'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                  );
+                }
+              })
+              .catch((e) => {
+                new Notice(
+                  'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                );
+                console.error(e);
+              });
+          });
+        });
+      });
+
+    new Setting(containerEl)
       .setName('Hide Links')
-      .setDesc(
-        "Replace links with link icons to save space."
-      )
+      .setDesc('Replace links with link icons to save space.')
       .addToggle((text) =>
-        text
-          .setValue(!!this.plugin.settings.hideLinks)
-          .onChange(async (value) => {
-            this.plugin.settings.hideLinks = value;
-            await this.plugin.saveSettings();
-          })
+        text.setValue(!!this.plugin.settings.hideLinks).onChange((value) => {
+          this.plugin.settings.hideLinks = value;
+          this.plugin.saveSettings();
+        })
       );
   }
 }

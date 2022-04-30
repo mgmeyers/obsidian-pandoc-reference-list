@@ -1,5 +1,6 @@
 import { execa } from 'execa';
 import path from 'path';
+import which from 'which';
 
 import { ReferenceListSettings } from './settings';
 
@@ -63,7 +64,8 @@ export async function pandocMarkdownToHTML(
   }
 
   try {
-    const result = await execa(settings.pathToPandoc, args);
+    const pathToPandoc = await which('pandoc');
+    const result = await execa(pathToPandoc || settings.pathToPandoc, args);
 
     // istanbul ignore next
     if (result.stderr) {
