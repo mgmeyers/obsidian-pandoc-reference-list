@@ -37,18 +37,7 @@ export default class ReferenceList extends Plugin {
 
   async onload() {
     await this.loadSettings();
-    await fixPath();
     this.emitter = createEmitter();
-
-    if (!this.settings.pathToPandoc) {
-      try {
-        // Attempt to find if/where pandoc is located on the user's machine
-        const pathToPandoc = await which('pandoc');
-        this.settings.pathToPandoc = pathToPandoc;
-      } catch {
-        // We can ignore any errors here
-      }
-    }
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
     this.registerView(
@@ -74,6 +63,19 @@ export default class ReferenceList extends Plugin {
         this.initLeaf();
       });
     }
+
+    await fixPath();
+
+    if (!this.settings.pathToPandoc) {
+      try {
+        // Attempt to find if/where pandoc is located on the user's machine
+        const pathToPandoc = await which('pandoc');
+        this.settings.pathToPandoc = pathToPandoc;
+        this.saveSettings();
+      } catch {
+        // We can ignore any errors here
+      }
+    }
   }
 
   onunload() {
@@ -95,14 +97,14 @@ export default class ReferenceList extends Plugin {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  emitterDb = 0
+  emitterDb = 0;
   async saveSettings() {
     clearTimeout(this.emitterDb);
     this.emitterDb = window.setTimeout(() => {
       if (this.emitter?.events.settingsUpdated?.length) {
         this.emitter.emit('settingsUpdated', undefined);
       }
-    }, 5000)
+    }, 5000);
     await this.saveData(this.settings);
   }
 }
