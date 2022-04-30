@@ -29,11 +29,13 @@ const DEFAULT_SETTINGS: ReferenceListSettings = {
 
 interface ViewEvents {
   settingsUpdated: () => void;
+  ready: () => void;
 }
 
 export default class ReferenceList extends Plugin {
   settings: ReferenceListSettings;
   emitter: Emitter<ViewEvents>;
+  isReady: boolean = false;
 
   async onload() {
     await this.loadSettings();
@@ -75,6 +77,12 @@ export default class ReferenceList extends Plugin {
       } catch {
         // We can ignore any errors here
       }
+    }
+
+    // We don't want to attempt to execute pandoc until we've had a chance to fix PATH
+    if (this.emitter?.events.settingsUpdated?.length) {
+      this.isReady = true;
+      this.emitter.emit('ready', undefined);
     }
   }
 

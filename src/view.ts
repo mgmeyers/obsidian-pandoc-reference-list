@@ -12,6 +12,7 @@ export class ReferenceListView extends ItemView {
 
   async onClose() {
     this.viewManager.cache.clear();
+    this.plugin.emitter.off('ready', this.processReferences);
     this.plugin.emitter.off('settingsUpdated', this.processReferences);
     return super.onClose();
   }
@@ -24,35 +25,47 @@ export class ReferenceListView extends ItemView {
 
     this.registerEvent(
       app.metadataCache.on('changed', (file) => {
-        const activeView = app.workspace.getActiveViewOfType(MarkdownView);
-        if (activeView && file === activeView.file) {
-          this.processReferences();
+        if (this.plugin.isReady) {
+          const activeView = app.workspace.getActiveViewOfType(MarkdownView);
+          if (activeView && file === activeView.file) {
+            this.processReferences();
+          }
         }
       })
     );
 
     this.registerEvent(
       app.workspace.on('active-leaf-change', (leaf) => {
-        if (leaf && leaf.view instanceof MarkdownView) {
-          this.processReferences();
-        } else {
-          this.setNoContentMessage();
+        if (this.plugin.isReady) {
+          if (leaf && leaf.view instanceof MarkdownView) {
+            this.processReferences();
+          } else {
+            this.setNoContentMessage();
+          }
         }
       })
     );
 
-    this.processReferences();
+    if (this.plugin.isReady) {
+      this.processReferences();
+    } else {
+      this.plugin.emitter.on('ready', this.processReferences);
+    }
 
-    this.plugin.emitter.on('settingsUpdated', this.processReferences);
+    this.plugin.emitter.on('settingsUpdated', this.handleSettingsUpdaate);
     this.contentEl.addClass('pwc-reference-list');
   }
 
-  processReferences = () => {
+  handleSettingsUpdaate = () => {
     this.contentEl.toggleClass(
       'collapsed-links',
       !!this.plugin.settings.hideLinks
     );
 
+    this.processReferences();
+  };
+
+  processReferences = () => {
     if (!this.plugin.settings.pathToPandoc) {
       return this.setMessage(
         'Please provide the path to pandoc in the Pandoc Reference List plugin settings.'
@@ -97,6 +110,14 @@ export class ReferenceListView extends ItemView {
         const citeKey = id ? ` @${id.split('-').pop()}` : '';
 
         e.setAttribute('aria-label', `Click to copy${citeKey}`);
+
+        const leafRoot = this.leaf.getRoot();
+        if (leafRoot) {
+          const tooltipPos =
+            (leafRoot as any).side === 'right' ? 'left' : 'right';
+          e.setAttribute('aria-label-position', tooltipPos);
+        }
+
         e.onClickEvent(() => {
           this.copyToClipboard(e);
         });
