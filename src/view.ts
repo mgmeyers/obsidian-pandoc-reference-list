@@ -1,4 +1,4 @@
-import { ItemView, MarkdownView, WorkspaceLeaf } from 'obsidian';
+import { ItemView, MarkdownView, setIcon, WorkspaceLeaf } from 'obsidian';
 
 import ReferenceList from './main';
 import { ViewManager } from './viewManager';
@@ -12,6 +12,7 @@ export class ReferenceListView extends ItemView {
 
   async onClose() {
     this.viewManager.cache.clear();
+    this.plugin.emitter.off('settingsUpdated', this.processReferences);
     return super.onClose();
   }
 
@@ -22,13 +23,10 @@ export class ReferenceListView extends ItemView {
     this.viewManager = new ViewManager(plugin);
 
     this.registerEvent(
-      app.metadataCache.on('changed', (file, content) => {
+      app.metadataCache.on('changed', (file) => {
         const activeView = app.workspace.getActiveViewOfType(MarkdownView);
-
         if (activeView && file === activeView.file) {
-          this.viewManager.getReferenceList(file, content).then((bib) => {
-            this.setViewContent(bib);
-          });
+          this.processReferences();
         }
       })
     );
@@ -36,17 +34,31 @@ export class ReferenceListView extends ItemView {
     this.registerEvent(
       app.workspace.on('active-leaf-change', (leaf) => {
         if (leaf && leaf.view instanceof MarkdownView) {
-          const file = leaf.view.file;
-          app.vault.cachedRead(file).then((content) => {
-            this.viewManager.getReferenceList(file, content).then((bib) => {
-              this.setViewContent(bib);
-            });
-          });
+          this.processReferences();
         } else {
           this.setNoContentMessage();
         }
       })
     );
+
+    this.processReferences();
+
+    this.plugin.emitter.on('settingsUpdated', this.processReferences);
+    this.contentEl.addClass('pwc-reference-list');
+  }
+
+  processReferences = () => {
+    if (!this.plugin.settings.pathToPandoc) {
+      return this.setMessage(
+        'Please provide the path to pandoc in the Pandoc Reference List plugin settings.'
+      );
+    }
+
+    if (!this.plugin.settings.pathToBibliography) {
+      return this.setMessage(
+        'Please provide the path to your pandoc compatible bibliography file in the Pandoc Reference List plugin settings.'
+      );
+    }
 
     const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 
@@ -61,12 +73,17 @@ export class ReferenceListView extends ItemView {
     } else {
       this.setNoContentMessage();
     }
-
-    this.contentEl.addClass('pwc-reference-list');
-  }
+  };
 
   setViewContent(bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
+      if (this.plugin.settings.hideLinks) {
+        bib.findAll('a').forEach((l) => {
+          l.setAttribute('aria-label', l.innerText);
+          setIcon(l, 'link');
+        });
+      }
+
       this.contentEl.empty();
       this.contentEl.createDiv({
         cls: 'pwc-reference-list__title',
@@ -79,10 +96,14 @@ export class ReferenceListView extends ItemView {
   }
 
   setNoContentMessage() {
+    this.setMessage('No citations found in the active document.');
+  }
+
+  setMessage(message: string) {
     this.contentEl.empty();
     this.contentEl.createDiv({
       cls: 'pwc-no-content',
-      text: 'No citations found in the active document.',
+      text: message,
     });
   }
 

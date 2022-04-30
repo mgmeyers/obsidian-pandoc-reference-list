@@ -3143,13 +3143,6 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
-fix-path@^4.0.0:
-  version "4.0.0"
-  resolved "https://registry.yarnpkg.com/fix-path/-/fix-path-4.0.0.tgz#bc1d14f038edb734ac46944a45454106952ca429"
-  integrity sha512-g31GX207Tt+psI53ZSaB1egprYbEN0ZYl90aKcO22A2LmCNnFsSq3b5YpoKp3E/QEiWByTXGJOkFQG4S07Bc1A==
-  dependencies:
-    shell-path "^3.0.0"
-
 flat-cache@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/flat-cache/-/flat-cache-2.0.1.tgz#5d296d6f04bda44a4630a301413bdbc2ec085ec0"
@@ -4918,7 +4911,7 @@ obsidian-utils@^0.10.0:
     node-fetch "^2.6.1"
     which "^2.0.2"
 
-obsidian@latest:
+obsidian@^0.14.6:
   version "0.14.6"
   resolved "https://registry.yarnpkg.com/obsidian/-/obsidian-0.14.6.tgz#010e16da3a1a7725f5e91beb9f14ec8abd00c15d"
   integrity sha512-oXPJ8Zt10WhN19bk5l4mZuXRZbbdT1QoMgxGGJ0bB7UcJa0bozDzugS5L/QiV9gDoujpUPxDWNVahEel6r0Fpw==

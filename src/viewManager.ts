@@ -1,7 +1,7 @@
 import path from 'path';
 
 import LRUCache from 'lru-cache';
-import { Notice, TFile } from 'obsidian';
+import { TFile } from 'obsidian';
 
 import { getVaultRoot } from './helpers';
 import ReferenceList from './main';
@@ -50,9 +50,8 @@ export class ViewManager {
         this.cache.set(file, result);
 
         return result.bib;
-      } catch {
-        // We generate a lot of errors as users type citekeys
-        // We could probably debounce this so it calls pandoc less frequently
+      } catch (e) {
+        console.error(e);
         return null;
       }
     }

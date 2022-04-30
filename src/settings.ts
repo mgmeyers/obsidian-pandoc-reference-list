@@ -1,4 +1,4 @@
-import { App, PluginSettingTab, Setting } from 'obsidian';
+import { PluginSettingTab, Setting } from 'obsidian';
 
 import ReferenceList from './main';
 
@@ -6,6 +6,7 @@ export interface ReferenceListSettings {
   pathToPandoc: string;
   pathToBibliography?: string;
   cslStyle?: string;
+  hideLinks?: boolean;
 }
 
 export class ReferenceListSettingsTab extends PluginSettingTab {
@@ -55,6 +56,20 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
           .setValue(this.plugin.settings.pathToPandoc)
           .onChange(async (value) => {
             this.plugin.settings.pathToPandoc = value;
+            await this.plugin.saveSettings();
+          })
+      );
+
+      new Setting(containerEl)
+      .setName('Hide Links')
+      .setDesc(
+        "Replace links with link icons to save space."
+      )
+      .addToggle((text) =>
+        text
+          .setValue(!!this.plugin.settings.hideLinks)
+          .onChange(async (value) => {
+            this.plugin.settings.hideLinks = value;
             await this.plugin.saveSettings();
           })
       );

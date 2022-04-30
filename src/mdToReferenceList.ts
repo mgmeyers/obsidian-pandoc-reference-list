@@ -1,20 +1,28 @@
 import { execa } from 'execa';
+import path from 'path';
 
 import { ReferenceListSettings } from './settings';
 
 export function areSetsEqual<T>(as: Set<T>, bs: Set<T>) {
   if (as.size !== bs.size) return false;
-  for (let a of as) if (!bs.has(a)) return false;
+  for (const a of as) if (!bs.has(a)) return false;
   return true;
 }
 
-const citekeyRe = /(@\w[\w:.#$%&\-+?<>~/]*\w+)/g;
+function resolveHome(filepath: string) {
+  if (filepath[0] === '~' && process.env.HOME) {
+      return path.join(process.env.HOME, filepath.slice(1));
+  }
+  return filepath;
+}
+
+const citekeyRe = /(@[^\s]+)/g;
 
 export function extractCiteKeys(md: string): Set<string> {
   const matches = md.matchAll(citekeyRe);
   const output = new Set<string>();
 
-  for (let match of matches) {
+  for (const match of matches) {
     if (!output.has(match[1])) {
       output.add(match[1]);
     }
@@ -42,16 +50,16 @@ export async function pandocMarkdownToHTML(
   }
 
   const args = [
-    filePath,
+    resolveHome(filePath),
     '-t',
     'html',
     '--citeproc',
     '--quiet',
-    `--bibliography=${settings.pathToBibliography}`,
+    `--bibliography=${resolveHome(settings.pathToBibliography)}`,
   ];
 
   if (settings.cslStyle) {
-    args.push(`--csl=${settings.cslStyle}`);
+    args.push(`--csl=${resolveHome(settings.cslStyle)}`);
   }
 
   try {
