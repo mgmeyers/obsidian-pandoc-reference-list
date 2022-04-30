@@ -54,6 +54,10 @@ export class ReferenceListView extends ItemView {
 
     this.plugin.emitter.on('settingsUpdated', this.handleSettingsUpdaate);
     this.contentEl.addClass('pwc-reference-list');
+    this.contentEl.toggleClass(
+      'collapsed-links',
+      !!this.plugin.settings.hideLinks
+    );
   }
 
   handleSettingsUpdaate = () => {
