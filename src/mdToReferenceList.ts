@@ -18,7 +18,7 @@ function resolveHome(filepath: string) {
   return filepath;
 }
 
-const citekeyRe = /(@[^\s]+)/g;
+const citekeyRe = /(@[^\s\]]+)/g;
 
 export function extractCiteKeys(md: string): Set<string> {
   const matches = md.matchAll(citekeyRe);

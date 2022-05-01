@@ -74,10 +74,12 @@
   width: 50%;
 }
 
+.pwc-tooltip.collapsed-links a,
 .pwc-reference-list.collapsed-links a {
   font-size: 0;
 }
 
+.pwc-tooltip.collapsed-links a::after,
 .pwc-reference-list.collapsed-links a::after {
   font-size: var(--pwc-font-size);
   content: ' ';
@@ -89,4 +91,38 @@
 
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath d='M8.465 11.293c1.133-1.133 3.109-1.133 4.242 0l.707.707 1.414-1.414-.707-.707c-.943-.944-2.199-1.465-3.535-1.465s-2.592.521-3.535 1.465L4.929 12a5.008 5.008 0 0 0 0 7.071 4.983 4.983 0 0 0 3.535 1.462A4.982 4.982 0 0 0 12 19.071l.707-.707-1.414-1.414-.707.707a3.007 3.007 0 0 1-4.243 0 3.005 3.005 0 0 1 0-4.243l2.122-2.121z'%3E%3C/path%3E%3Cpath d='m12 4.929-.707.707 1.414 1.414.707-.707a3.007 3.007 0 0 1 4.243 0 3.005 3.005 0 0 1 0 4.243l-2.122 2.121c-1.133 1.133-3.109 1.133-4.242 0L10.586 12l-1.414 1.414.707.707c.943.944 2.199 1.465 3.535 1.465s2.592-.521 3.535-1.465L19.071 12a5.008 5.008 0 0 0 0-7.071 5.006 5.006 0 0 0-7.071 0z'%3E%3C/path%3E%3C/svg%3E");
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1em' height='1em' viewBox='0 0 24 24'%3E%3Cpath d='M8.465 11.293c1.133-1.133 3.109-1.133 4.242 0l.707.707 1.414-1.414-.707-.707c-.943-.944-2.199-1.465-3.535-1.465s-2.592.521-3.535 1.465L4.929 12a5.008 5.008 0 0 0 0 7.071 4.983 4.983 0 0 0 3.535 1.462A4.982 4.982 0 0 0 12 19.071l.707-.707-1.414-1.414-.707.707a3.007 3.007 0 0 1-4.243 0 3.005 3.005 0 0 1 0-4.243l2.122-2.121z'%3E%3C/path%3E%3Cpath d='m12 4.929-.707.707 1.414 1.414.707-.707a3.007 3.007 0 0 1 4.243 0 3.005 3.005 0 0 1 0 4.243l-2.122 2.121c-1.133 1.133-3.109 1.133-4.242 0L10.586 12l-1.414 1.414.707.707c.943.944 2.199 1.465 3.535 1.465s2.592-.521 3.535-1.465L19.071 12a5.008 5.008 0 0 0 0-7.071 5.006 5.006 0 0 0-7.071 0z'%3E%3C/path%3E%3C/svg%3E");
+}
+
+.pwc-tooltip {
+  position: fixed;
+  font-family: var(--font-interface);
+  font-size: 14px;
+  padding: 10px;
+  background-color: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  width: 300px;
+  line-height: 1.4;
+  z-index: var(--layer-popover);
+  overflow: hidden;
+}
+
+.pandoc-citation {
+  color: var(--text-normal);
+}
+
+.cm-pandoc-citation-formatting {
+  color: var(--text-muted);
+}
+
+.cm-pandoc-citation-extra {
+  color: var(--text-normal);
+}
+
+.pwc-tooltips .pandoc-citation {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 2px;
+  text-decoration-color: var(--text-accent);
 }

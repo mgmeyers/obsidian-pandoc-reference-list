@@ -23,7 +23,27 @@ export class ViewManager {
 
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
-    this.cache = new LRUCache({ max: 10 });
+    this.cache = new LRUCache({ max: 20 });
+  }
+
+  getBibForCiteKey(file: TFile, key: string) {
+    if (!this.cache.has(file)) {
+      return null;
+    }
+
+    const cache = this.cache.get(file);
+
+    if (!cache.keys.has(key)) {
+      return null;
+    }
+
+    const html = cache.bib.querySelector(`#ref-${key.slice(1)}`);
+
+    if (!html) {
+      return null;
+    }
+
+    return html.outerHTML;
   }
 
   async getReferenceList(file: TFile, content: string) {

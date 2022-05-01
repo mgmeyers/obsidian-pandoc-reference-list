@@ -8,6 +8,7 @@ export interface ReferenceListSettings {
   pathToBibliography?: string;
   cslStyle?: string;
   hideLinks?: boolean;
+  showCitekeyTooltips?: boolean;
 }
 
 export class ReferenceListSettingsTab extends PluginSettingTab {
@@ -139,6 +140,20 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
           this.plugin.settings.hideLinks = value;
           this.plugin.saveSettings();
         })
+      );
+
+    new Setting(containerEl)
+      .setName('Show Citekey Tooltips')
+      .setDesc(
+        'When enabled, hovering over citekeys will open a tooltip containing a formatted citation.'
+      )
+      .addToggle((text) =>
+        text
+          .setValue(!!this.plugin.settings.showCitekeyTooltips)
+          .onChange((value) => {
+            this.plugin.settings.showCitekeyTooltips = value;
+            this.plugin.saveSettings();
+          })
       );
   }
 }

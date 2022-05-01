@@ -1,9 +1,12 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { shellPath } from 'shell-path';
 import which from 'which';
+import { citeKeyPlugin } from './editorExtension';
 
 import { Emitter, createEmitter } from './emitter';
+import { processCiteKeys } from './markdownPostprocessor';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';
+import { TooltipManager } from './tooltip';
 import { ReferenceListView, viewType } from './view';
 
 // TODO: ask @licat to do this?
@@ -36,15 +39,22 @@ export default class ReferenceList extends Plugin {
   settings: ReferenceListSettings;
   emitter: Emitter<ViewEvents>;
   isReady: boolean = false;
+  view: ReferenceListView;
+  tooltipManager: TooltipManager;
 
   async onload() {
     await this.loadSettings();
     this.emitter = createEmitter();
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
-    this.registerView(
-      viewType,
-      (leaf: WorkspaceLeaf) => new ReferenceListView(leaf, this)
+    this.registerView(viewType, (leaf: WorkspaceLeaf) => {
+      this.view = new ReferenceListView(leaf, this);
+      return this.view;
+    });
+
+    document.body.toggleClass(
+      'pwc-tooltips',
+      !!this.settings.showCitekeyTooltips
     );
 
     this.addCommand({
@@ -65,6 +75,10 @@ export default class ReferenceList extends Plugin {
         this.initLeaf();
       });
     }
+
+    this.registerEditorExtension(citeKeyPlugin);
+    this.registerMarkdownPostProcessor(processCiteKeys);
+    this.tooltipManager = new TooltipManager(this);
 
     await fixPath();
 
@@ -87,6 +101,7 @@ export default class ReferenceList extends Plugin {
   }
 
   onunload() {
+    this.tooltipManager.destroy();
     this.app.workspace
       .getLeavesOfType(viewType)
       .forEach((leaf) => leaf.detach());
@@ -107,6 +122,10 @@ export default class ReferenceList extends Plugin {
 
   emitterDb = 0;
   async saveSettings() {
+    document.body.toggleClass(
+      'pwc-tooltips',
+      !!this.settings.showCitekeyTooltips
+    );
     clearTimeout(this.emitterDb);
     this.emitterDb = window.setTimeout(() => {
       if (this.emitter?.events.settingsUpdated?.length) {

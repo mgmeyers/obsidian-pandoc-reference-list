@@ -5,7 +5,7 @@
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
-		"build": "node esbuild.config.mjs production",
+    "build": "node esbuild.config.mjs production",
     "check-types": "tsc --noemit",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src/**/* --fix",
@@ -42,6 +42,7 @@
     "xml-js": "^1.6.11"
   },
   "dependencies": {
+    "@codemirror/stream-parser": "https://github.com/lishid/stream-parser",
     "execa": "^6.1.0",
     "fuse.js": "^6.5.3",
     "lru-cache": "^7.8.1",
