@@ -932,17 +932,6 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@codemirror/language@^0.19.0":
-  version "0.19.10"
-  resolved "https://registry.yarnpkg.com/@codemirror/language/-/language-0.19.10.tgz#c3d1330fa5de778c6b6b5177af5572a3d9d596b5"
-  integrity sha512-yA0DZ3RYn2CqAAGW62VrU8c4YxscMQn45y/I9sjBlqB1e2OTQLg4CCkMBuMSLXk4xaqjlsgazeOQWaJQOKfV8Q==
-  dependencies:
-    "@codemirror/state" "^0.19.0"
-    "@codemirror/text" "^0.19.0"
-    "@codemirror/view" "^0.19.0"
-    "@lezer/common" "^0.15.5"
-    "@lezer/lr" "^0.15.0"
-
 "@codemirror/rangeset@^0.19.5":
   version "0.19.9"
   resolved "https://registry.yarnpkg.com/@codemirror/rangeset/-/rangeset-0.19.9.tgz#e80895de93c39dc7899f5be31d368c9d88aa4efc"
@@ -957,22 +946,12 @@
   dependencies:
     "@codemirror/text" "^0.19.0"
 
-"@codemirror/stream-parser@https://github.com/lishid/stream-parser":
-  version "0.19.6"
-  resolved "https://github.com/lishid/stream-parser#26c8edae7bdf63dc34d358d1de640bdd12e7b09f"
-  dependencies:
-    "@codemirror/language" "^0.19.0"
-    "@codemirror/state" "^0.19.0"
-    "@codemirror/text" "^0.19.0"
-    "@lezer/common" "^0.15.0"
-    "@lezer/lr" "^0.15.0"
-
 "@codemirror/text@^0.19.0":
   version "0.19.6"
   resolved "https://registry.yarnpkg.com/@codemirror/text/-/text-0.19.6.tgz#9adcbd8137f69b75518eacd30ddb16fd67bbac45"
   integrity sha512-T9jnREMIygx+TPC1bOuepz18maGq/92q2a+n4qTqObKwvNMg+8cMTslb8yxeEDEq7S3kpgGWxgO1UWbQRij0dA==
 
-"@codemirror/view@^0.19.0", "@codemirror/view@^0.19.31":
+"@codemirror/view@^0.19.31":
   version "0.19.48"
   resolved "https://registry.yarnpkg.com/@codemirror/view/-/view-0.19.48.tgz#1c657e2b0f8ed896ac6448d6e2215ab115e2a0fc"
   integrity sha512-0eg7D2Nz4S8/caetCTz61rK0tkHI17V/d15Jy0kLOT8dTLGGNJUponDnW28h2B6bERmPlVHKh8MJIr5OCp1nGw==
@@ -1227,18 +1206,6 @@
   dependencies:
     "@jridgewell/resolve-uri" "^3.0.3"
     "@jridgewell/sourcemap-codec" "^1.4.10"
-
-"@lezer/common@^0.15.0", "@lezer/common@^0.15.5":
-  version "0.15.12"
-  resolved "https://registry.yarnpkg.com/@lezer/common/-/common-0.15.12.tgz#2f21aec551dd5fd7d24eb069f90f54d5bc6ee5e9"
-  integrity sha512-edfwCxNLnzq5pBA/yaIhwJ3U3Kz8VAUOTRg0hhxaizaI1N+qxV7EXDv/kLCkLeq2RzSFvxexlaj5Mzfn2kY0Ig==
-
-"@lezer/lr@^0.15.0":
-  version "0.15.8"
-  resolved "https://registry.yarnpkg.com/@lezer/lr/-/lr-0.15.8.tgz#1564a911e62b0a0f75ca63794a6aa8c5dc63db21"
-  integrity sha512-bM6oE6VQZ6hIFxDNKk8bKPa14hqFrV07J/vHGOeiAbJReIaQXmkVb6xQu4MR+JBTLa5arGRyAAjJe1qaQt3Uvg==
-  dependencies:
-    "@lezer/common" "^0.15.0"
 
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
