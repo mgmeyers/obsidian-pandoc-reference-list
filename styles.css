@@ -109,15 +109,15 @@
 }
 
 .pandoc-citation {
-  color: #f0f;
+  color: var(--text-normal);
 }
 
 .cm-pandoc-citation-formatting {
-  color: #0ff;
+  color: var(--text-muted);
 }
 
 .cm-pandoc-citation-extra {
-  color: #f00;
+  color: var(--text-normal);
 }
 
 .pwc-tooltips .pandoc-citation {
