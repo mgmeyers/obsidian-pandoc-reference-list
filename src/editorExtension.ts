@@ -27,7 +27,7 @@ const citeMarkExtra = Decoration.mark({
 });
 
 export const citeRegExp =
-  /(?<=^|[.;\s])(?:(\[)([^@]+)?(@[^\s\]]+)([^\]]+)?(\])|(@[^\s\]]+)( *)(?:(\[)([^\]]+)(\]))?)/g;
+/(?<=^|[.;\s])(?:(\[|;)([^@]+)?(@[^\s\];]+)([^;\]]+)?(\]|;)?|(@[^\s\];]+)( *)(?:(\[)([^\]]+)(\]))?)/g;
 
 export const citeKeyPlugin = ViewPlugin.fromClass(
   class {
