@@ -27,7 +27,14 @@ const citeMarkExtra = Decoration.mark({
 });
 
 export const citeRegExp =
-/(?<=^|[.;\s])(?:(\[|;)([^@]+)?(@[^\s\];]+)([^;\]]+)?(\]|;)?|(@[^\s\];]+)( *)(?:(\[)([^\]]+)(\]))?)/g;
+  /(?<=^|[.;\s])(?:(\[)([^@\n\r]*)((?:@[^@\s[\];]+(?:; *)?)+)([^;[\]]*)(\])|(@[^\s[\];]+)(?:( *)(\[)([^[\]]+)(\]))?)/g;
+//                 1   2          3                          4         5    6               7   8   9        10
+// 1,5,8,10 -> formatting
+// 2,4,7,9  -> extra
+// 6        -> citekey
+// 3        -> multicitekey
+
+export const multiCiteRegExp = /(@[^@\s[\];]+)(; *)?/g;
 
 export const citeKeyPlugin = ViewPlugin.fromClass(
   class {
@@ -47,7 +54,6 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
         const range = view.state.sliceDoc(from, to);
         let match;
 
-        citeRegExp.lastIndex = 0;
         while ((match = citeRegExp.exec(range))) {
           let pos = from + match.index;
 
@@ -55,6 +61,25 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
           for (let i = 1; i <= 10; i++) {
             switch (i) {
               case 3:
+                // Break up multicite matches
+                if (match[i]) {
+                  const multiCite = match[i];
+                  let m2;
+                  while ((m2 = multiCiteRegExp.exec(multiCite))) {
+                    b.add(
+                      pos,
+                      pos + m2[1].length,
+                      citeMark(m2[1], obsView.file.path)
+                    );
+                    pos += m2[1].length;
+
+                    if (m2[2]) {
+                      b.add(pos, pos + m2[2].length, citeMarkFormatting);
+                      pos += m2[2].length;
+                    }
+                  }
+                }
+                continue;
               case 6:
                 if (match[i]) {
                   b.add(
@@ -76,16 +101,13 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                 continue;
               case 2:
               case 4:
+              case 7:
               case 9:
                 if (match[i]) {
                   b.add(pos, pos + match[i].length, citeMarkExtra);
                   pos += match[i].length;
                 }
                 continue;
-              case 7:
-                if (match[i]) {
-                  pos += match[i].length;
-                }
             }
           }
         }

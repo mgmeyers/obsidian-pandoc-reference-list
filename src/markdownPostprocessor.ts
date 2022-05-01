@@ -1,5 +1,5 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
-import { citeRegExp } from './editorExtension';
+import { citeRegExp, multiCiteRegExp } from './editorExtension';
 
 export function processCiteKeys(
   el: HTMLElement,
@@ -17,7 +17,6 @@ export function processCiteKeys(
     let pos = 0;
     let didMatch = false;
 
-    citeRegExp.lastIndex = 0;
     while ((match = citeRegExp.exec(content))) {
       if (!didMatch) didMatch = true;
 
@@ -31,6 +30,32 @@ export function processCiteKeys(
       for (let i = 1; i <= 10; i++) {
         switch (i) {
           case 3:
+            // Break up multicite matches
+            if (match[i]) {
+              const multiCite = match[i];
+              let m2;
+              while ((m2 = multiCiteRegExp.exec(multiCite))) {
+                console.log('m2', m2);
+                frag.createSpan({
+                  cls: 'pandoc-citation',
+                  text: m2[1],
+                  attr: {
+                    'data-citekey': m2[1],
+                    'data-source': ctx.sourcePath,
+                  },
+                });
+                pos += m2[1].length;
+
+                if (m2[2]) {
+                  frag.createSpan({
+                    cls: 'pandoc-citation-formatting',
+                    text: m2[2],
+                  });
+                  pos += m2[2].length;
+                }
+              }
+            }
+            continue;
           case 6:
             if (match[i]) {
               frag.createSpan({
@@ -58,6 +83,7 @@ export function processCiteKeys(
             continue;
           case 2:
           case 4:
+          case 7:
           case 9:
             if (match[i]) {
               frag.createSpan({
@@ -67,11 +93,6 @@ export function processCiteKeys(
               pos += match[i].length;
             }
             continue;
-          case 7:
-            if (match[i]) {
-              frag.appendText(match[i]);
-              pos += match[i].length;
-            }
         }
       }
     }
