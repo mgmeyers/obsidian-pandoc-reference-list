@@ -1,7 +1,7 @@
 import path from 'path';
 
 import LRUCache from 'lru-cache';
-import { TFile } from 'obsidian';
+import { MarkdownView, TFile } from 'obsidian';
 
 import { getVaultRoot } from './helpers';
 import ReferenceList from './main';
@@ -38,7 +38,6 @@ export class ViewManager {
     }
 
     const html = cache.bib.querySelector(`[id="ref-${key.slice(1)}"]`);
-
     if (!html) {
       return null;
     }
@@ -69,6 +68,12 @@ export class ViewManager {
 
         this.cache.set(file, result);
 
+        const activeView = app.workspace.getActiveViewOfType(MarkdownView);
+
+        if (activeView) {
+          activeView.editor.refresh();
+        }
+
         return result.bib;
       } catch (e) {
         if (!e.message.includes('references container not found')) {
@@ -86,5 +91,14 @@ export class ViewManager {
     if (file && file instanceof TFile && this.cache.has(file)) {
       return this.cache.get(file).bib;
     }
+  }
+
+  haveEntryForCiteKey(filePath: string, key: string) {
+    const file = app.vault.getAbstractFileByPath(filePath);
+    if (file && file instanceof TFile && this.cache.has(file)) {
+      return this.cache.get(file).keys.has(key);
+    }
+
+    return false;
   }
 }

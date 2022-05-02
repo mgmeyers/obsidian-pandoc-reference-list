@@ -21,13 +21,14 @@ export class TooltipManager {
   initDelegatedEvents() {
     const over = delegate('.pandoc-citation', 'pointerover', (e: any) => {
       if (!this.plugin.settings.showCitekeyTooltips) return;
+
       if (e.delegateTarget) {
         const target = e.delegateTarget;
 
         clearTimeout(this.tooltipDb);
         this.tooltipDb = window.setTimeout(() => {
           this.showTooltip(target);
-        }, 1000);
+        }, this.plugin.settings.tooltipDelay);
       }
     });
 
@@ -59,18 +60,24 @@ export class TooltipManager {
       el.dataset.citekey
     );
 
-    if (!content) {
-      return;
-    }
-
     this.tooltip = document.body.createDiv({ cls: 'pwc-tooltip' }, (div) => {
-      const rect = el.getBoundingClientRect();
+      // @'s are wrapped on their own, but that's where we want to show the tooltip
+      const prev = el.previousElementSibling;
+      const rect = prev?.hasClass('pandoc-citation')
+        ? prev.getBoundingClientRect()
+        : el.getBoundingClientRect();
 
       if (this.plugin.settings.hideLinks) {
         div.addClass('collapsed-links');
       }
 
-      div.innerHTML = content;
+      if (content) {
+        div.innerHTML = content;
+      } else {
+        div.createEl('em', {
+          text: 'No citation found for ' + el.dataset.citekey,
+        });
+      }
 
       setTimeout(() => {
         const viewport = window.visualViewport;

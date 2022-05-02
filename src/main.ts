@@ -30,6 +30,7 @@ async function fixPath() {
 
 const DEFAULT_SETTINGS: ReferenceListSettings = {
   pathToPandoc: '',
+  tooltipDelay: 800,
 };
 
 interface ViewEvents {
@@ -59,11 +60,6 @@ export default class ReferenceList extends Plugin {
       !!this.settings.showCitekeyTooltips
     );
 
-    this.register(this.initDelegatedEvents());
-    this.registerEditorExtension(citeKeyPlugin);
-    this.registerMarkdownPostProcessor(processCiteKeys);
-    this.tooltipManager = new TooltipManager(this);
-
     if (this.app.workspace.layoutReady) {
       this.initLeaf();
     } else {
@@ -71,6 +67,11 @@ export default class ReferenceList extends Plugin {
         this.initLeaf();
       });
     }
+
+    this.register(this.initDelegatedEvents());
+    this.registerEditorExtension(citeKeyPlugin(this));
+    this.registerMarkdownPostProcessor(processCiteKeys(this));
+    this.tooltipManager = new TooltipManager(this);
 
     this.addCommand({
       id: 'show-reference-list-view',

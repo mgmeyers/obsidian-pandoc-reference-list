@@ -9,6 +9,7 @@ export interface ReferenceListSettings {
   cslStyle?: string;
   hideLinks?: boolean;
   showCitekeyTooltips?: boolean;
+  tooltipDelay: number;
 }
 
 export class ReferenceListSettingsTab extends PluginSettingTab {
@@ -155,5 +156,21 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
             this.plugin.saveSettings();
           })
       );
+
+    new Setting(containerEl)
+      .setName('Tooltip Delay')
+      .setDesc(
+        'Set the amount of time (in milliseconds) to wait before displaying tooltips.'
+      )
+      .addSlider((slider) => {
+        slider
+          .setDynamicTooltip()
+          .setLimits(0, 7000, 100)
+          .setValue(this.plugin.settings.tooltipDelay)
+          .onChange((value) => {
+            this.plugin.settings.tooltipDelay = value;
+            this.plugin.saveSettings();
+          });
+      });
   }
 }

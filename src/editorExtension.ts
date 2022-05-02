@@ -8,9 +8,24 @@ import {
 } from '@codemirror/view';
 import { editorViewField } from 'obsidian';
 
-const citeMark = (citekey: string, sourceFile: string) => {
+import ReferenceList from './main';
+
+const citeMark = (
+  citekey: string,
+  sourceFile: string,
+  isPrefix: boolean,
+  haveEntryForCiteKey: boolean
+) => {
+  const cls = ['cm-pandoc-citation', 'pandoc-citation'];
+
+  if (isPrefix) cls.push('pandoc-citation-at');
+
+  // TODO: need to figure this one out still, probably need to store available
+  //       references in editor state and send state updates from the viewManager
+  if (!haveEntryForCiteKey) cls.push('is-missing');
+
   return Decoration.mark({
-    class: 'cm-pandoc-citation pandoc-citation',
+    class: cls.join(' '),
     attributes: {
       'data-citekey': citekey,
       'data-source': sourceFile,
@@ -36,87 +51,103 @@ export const citeRegExp =
 //
 export const multiCiteRegExp = /(@[^@\s[\];]+)(; *)?/g;
 
-export const citeKeyPlugin = ViewPlugin.fromClass(
-  class {
-    decorations: DecorationSet;
-    constructor(view: EditorView) {
-      this.decorations = this.mkDeco(view);
-    }
-    update(update: ViewUpdate) {
-      if (update.viewportChanged || update.docChanged)
-        this.decorations = this.mkDeco(update.view);
-    }
-    mkDeco(view: EditorView) {
-      const b = new RangeSetBuilder<Decoration>();
-      const obsView = view.state.field(editorViewField);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const citeKeyPlugin = (plugin: ReferenceList) =>
+  ViewPlugin.fromClass(
+    class {
+      decorations: DecorationSet;
+      constructor(view: EditorView) {
+        this.decorations = this.mkDeco(view);
+      }
+      update(update: ViewUpdate) {
+        if (update.viewportChanged || update.docChanged)
+          this.decorations = this.mkDeco(update.view);
+      }
+      mkDeco(view: EditorView) {
+        const b = new RangeSetBuilder<Decoration>();
+        const obsView = view.state.field(editorViewField);
 
-      for (const { from, to } of view.visibleRanges) {
-        const range = view.state.sliceDoc(from, to);
-        let match;
+        for (const { from, to } of view.visibleRanges) {
+          const range = view.state.sliceDoc(from, to);
+          let match;
 
-        while ((match = citeRegExp.exec(range))) {
-          let pos = from + match.index;
+          while ((match = citeRegExp.exec(range))) {
+            let pos = from + match.index;
 
-          // Loop through the 10 possible groups
-          for (let i = 1; i <= 10; i++) {
-            switch (i) {
-              case 3:
-                // Break up multicite matches
-                if (match[i]) {
-                  const multiCite = match[i];
-                  let m2;
-                  while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                    b.add(
-                      pos,
-                      pos + m2[1].length,
-                      citeMark(m2[1], obsView.file.path)
-                    );
-                    pos += m2[1].length;
+            // Loop through the 10 possible groups
+            for (let i = 1; i <= 10; i++) {
+              switch (i) {
+                case 3:
+                  // Break up multicite matches
+                  if (match[i]) {
+                    const multiCite = match[i];
+                    let m2;
+                    while ((m2 = multiCiteRegExp.exec(multiCite))) {
+                      b.add(
+                        pos,
+                        pos + 1,
+                        citeMark(m2[1], obsView.file.path, true, true)
+                      );
 
-                    if (m2[2]) {
-                      b.add(pos, pos + m2[2].length, citeMarkFormatting);
-                      pos += m2[2].length;
+                      const noAt = m2[1].slice(1);
+                      b.add(
+                        pos + 1,
+                        pos + 1 + noAt.length,
+                        citeMark(m2[1], obsView.file.path, false, true)
+                      );
+                      pos += m2[1].length;
+
+                      if (m2[2]) {
+                        b.add(pos, pos + m2[2].length, citeMarkFormatting);
+                        pos += m2[2].length;
+                      }
                     }
                   }
-                }
-                continue;
-              case 6:
-                if (match[i]) {
-                  b.add(
-                    pos,
-                    pos + match[i].length,
-                    citeMark(match[i], obsView.file.path)
-                  );
-                  pos += match[i].length;
-                }
-                continue;
-              case 1:
-              case 5:
-              case 8:
-              case 10:
-                if (match[i]) {
-                  b.add(pos, pos + match[i].length, citeMarkFormatting);
-                  pos += match[i].length;
-                }
-                continue;
-              case 2:
-              case 4:
-              case 7:
-              case 9:
-                if (match[i]) {
-                  b.add(pos, pos + match[i].length, citeMarkExtra);
-                  pos += match[i].length;
-                }
-                continue;
+                  continue;
+                case 6:
+                  if (match[i]) {
+                    b.add(
+                      pos,
+                      pos + 1,
+                      citeMark(match[i], obsView.file.path, true, true)
+                    );
+
+                    const noAt = match[i].slice(1);
+                    b.add(
+                      pos + 1,
+                      pos + 1 + noAt.length,
+                      citeMark(match[i], obsView.file.path, false, true)
+                    );
+                    pos += match[i].length;
+                  }
+                  continue;
+                case 1:
+                case 5:
+                case 8:
+                case 10:
+                  if (match[i]) {
+                    b.add(pos, pos + match[i].length, citeMarkFormatting);
+                    pos += match[i].length;
+                  }
+                  continue;
+                case 2:
+                case 4:
+                case 7:
+                case 9:
+                  if (match[i]) {
+                    b.add(pos, pos + match[i].length, citeMarkExtra);
+                    pos += match[i].length;
+                  }
+                  continue;
+              }
             }
           }
         }
-      }
 
-      return b.finish();
+        return b.finish();
+      }
+    },
+    {
+      decorations: (v) => v.decorations,
     }
-  },
-  {
-    decorations: (v) => v.decorations,
-  }
-);
+  );
