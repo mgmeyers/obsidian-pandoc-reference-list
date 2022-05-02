@@ -37,7 +37,7 @@ export class ViewManager {
       return null;
     }
 
-    const html = cache.bib.querySelector(`#ref-${key.slice(1)}`);
+    const html = cache.bib.querySelector(`[id="ref-${key.slice(1)}"]`);
 
     if (!html) {
       return null;

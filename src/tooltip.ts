@@ -69,10 +69,15 @@ export class TooltipManager {
       div.innerHTML = content;
 
       setTimeout(() => {
+        const viewport = window.visualViewport;
         const divRect = div.getBoundingClientRect();
-        div.style.left = `${rect.x}px`;
+
+        div.style.left =
+          rect.x + divRect.width + 10 > viewport.width
+            ? `${rect.x - (rect.x + divRect.width + 10 - viewport.width)}px`
+            : `${rect.x}px`;
         div.style.top =
-          rect.bottom + divRect.height + 20 > window.visualViewport.height
+          rect.bottom + divRect.height + 10 > viewport.height
             ? `${rect.y - divRect.height - 5}px`
             : `${rect.bottom + 5}px`;
       });
