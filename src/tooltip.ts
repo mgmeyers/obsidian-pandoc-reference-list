@@ -1,4 +1,5 @@
 import { TFile } from 'obsidian';
+
 import ReferenceList from './main';
 
 export class TooltipManager {

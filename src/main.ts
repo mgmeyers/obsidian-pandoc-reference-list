@@ -1,8 +1,8 @@
 import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { shellPath } from 'shell-path';
 import which from 'which';
-import { citeKeyPlugin } from './editorExtension';
 
+import { citeKeyPlugin } from './editorExtension';
 import { Emitter, createEmitter } from './emitter';
 import { processCiteKeys } from './markdownPostprocessor';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';

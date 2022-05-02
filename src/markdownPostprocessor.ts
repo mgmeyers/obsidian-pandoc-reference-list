@@ -1,4 +1,5 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
+
 import { citeRegExp, multiCiteRegExp } from './editorExtension';
 
 export function processCiteKeys(
@@ -19,12 +20,8 @@ export function processCiteKeys(
 
     while ((match = citeRegExp.exec(content))) {
       if (!didMatch) didMatch = true;
-
       frag.appendText(content.substring(pos, match.index));
-
-      if (pos === 0) {
-        pos = match.index;
-      }
+      pos = match.index;
 
       // Loop through the 10 possible groups
       for (let i = 1; i <= 10; i++) {
@@ -35,7 +32,6 @@ export function processCiteKeys(
               const multiCite = match[i];
               let m2;
               while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                console.log('m2', m2);
                 frag.createSpan({
                   cls: 'pandoc-citation',
                   text: m2[1],

@@ -71,7 +71,9 @@ export class ViewManager {
 
         return result.bib;
       } catch (e) {
-        console.error(e);
+        if (!e.message.includes('references container not found')) {
+          console.error(e);
+        }
         return null;
       }
     }
