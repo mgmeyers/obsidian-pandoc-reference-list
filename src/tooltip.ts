@@ -1,3 +1,4 @@
+import delegate from 'delegate';
 import { TFile } from 'obsidian';
 
 import ReferenceList from './main';
@@ -13,15 +14,16 @@ export class TooltipManager {
     window.addEventListener('scroll', this.scrollHandler, {
       capture: true,
     });
+    plugin.register(this.initDelegatedEvents());
+    plugin.register(this.destroy);
+  }
 
-    plugin.registerDomEvent(document.documentElement, 'pointerover', (e) => {
-      if (!plugin.settings.showCitekeyTooltips) return;
+  initDelegatedEvents() {
+    const over = delegate('.pandoc-citation', 'pointerover', (e: any) => {
+      if (!this.plugin.settings.showCitekeyTooltips) return;
+      if (e.delegateTarget) {
+        const target = e.delegateTarget;
 
-      const target = e.target;
-      if (
-        target instanceof HTMLSpanElement &&
-        target.hasClass('pandoc-citation')
-      ) {
         clearTimeout(this.tooltipDb);
         this.tooltipDb = window.setTimeout(() => {
           this.showTooltip(target);
@@ -29,18 +31,19 @@ export class TooltipManager {
       }
     });
 
-    plugin.registerDomEvent(document.documentElement, 'pointerout', (e) => {
-      if (!plugin.settings.showCitekeyTooltips) return;
-
-      const target = e.target;
-      if (
-        target instanceof HTMLSpanElement &&
-        target.hasClass('pandoc-citation')
-      ) {
+    const out = delegate('.pandoc-citation', 'pointerout', (e: any) => {
+      if (!this.plugin.settings.showCitekeyTooltips) return;
+      if (e.delegateTarget) {
         this.hideTooltip();
       }
     });
+
+    return () => {
+      over.destroy();
+      out.destroy();
+    };
   }
+
   showTooltip(el: HTMLSpanElement) {
     if (this.tooltip) {
       this.hideTooltip();
@@ -85,11 +88,11 @@ export class TooltipManager {
     });
   }
 
-  destroy() {
+  destroy = () => {
     window.removeEventListener('scroll', this.scrollHandler, {
       capture: true,
     });
-  }
+  };
 
   scrollHandler = () => {
     if (this.tooltip) {

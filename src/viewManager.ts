@@ -80,4 +80,11 @@ export class ViewManager {
 
     return cachedDoc.bib;
   }
+
+  getReferenceListForSource(filePath: string) {
+    const file = app.vault.getAbstractFileByPath(filePath);
+    if (file && file instanceof TFile && this.cache.has(file)) {
+      return this.cache.get(file).bib;
+    }
+  }
 }

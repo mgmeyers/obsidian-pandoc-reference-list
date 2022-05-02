@@ -1,9 +1,11 @@
+import delegate from 'delegate';
 import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { shellPath } from 'shell-path';
 import which from 'which';
 
 import { citeKeyPlugin } from './editorExtension';
 import { Emitter, createEmitter } from './emitter';
+import { copyElToClipboard } from './helpers';
 import { processCiteKeys } from './markdownPostprocessor';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';
 import { TooltipManager } from './tooltip';
@@ -57,6 +59,19 @@ export default class ReferenceList extends Plugin {
       !!this.settings.showCitekeyTooltips
     );
 
+    this.register(this.initDelegatedEvents());
+    this.registerEditorExtension(citeKeyPlugin);
+    this.registerMarkdownPostProcessor(processCiteKeys);
+    this.tooltipManager = new TooltipManager(this);
+
+    if (this.app.workspace.layoutReady) {
+      this.initLeaf();
+    } else {
+      this.app.workspace.onLayoutReady(() => {
+        this.initLeaf();
+      });
+    }
+
     this.addCommand({
       id: 'show-reference-list-view',
       name: 'Open view',
@@ -67,18 +82,6 @@ export default class ReferenceList extends Plugin {
         this.initLeaf();
       },
     });
-
-    if (this.app.workspace.layoutReady) {
-      this.initLeaf();
-    } else {
-      this.app.workspace.onLayoutReady(() => {
-        this.initLeaf();
-      });
-    }
-
-    this.registerEditorExtension(citeKeyPlugin);
-    this.registerMarkdownPostProcessor(processCiteKeys);
-    this.tooltipManager = new TooltipManager(this);
 
     await fixPath();
 
@@ -101,7 +104,6 @@ export default class ReferenceList extends Plugin {
   }
 
   onunload() {
-    this.tooltipManager.destroy();
     this.app.workspace
       .getLeavesOfType(viewType)
       .forEach((leaf) => leaf.detach());
@@ -116,6 +118,31 @@ export default class ReferenceList extends Plugin {
     });
   }
 
+  initDelegatedEvents() {
+    const singleRefListener = delegate('.csl-entry', 'click', (e: any) => {
+      if (e.delegateTarget) {
+        copyElToClipboard(e.delegateTarget);
+      }
+    });
+
+    const listListener = delegate('.pwc-copy-list', 'click', (e: any) => {
+      if (e.delegateTarget) {
+        const path = e.delegateTarget.dataset.source;
+        let bib = this.view.viewManager.getReferenceListForSource(path);
+
+        if (bib) {
+          copyElToClipboard(bib);
+          bib = null;
+        }
+      }
+    });
+
+    return () => {
+      singleRefListener.destroy();
+      listListener.destroy();
+    };
+  }
+
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
@@ -126,12 +153,15 @@ export default class ReferenceList extends Plugin {
       'pwc-tooltips',
       !!this.settings.showCitekeyTooltips
     );
+
+    // Refresh the reference list when settings change
     clearTimeout(this.emitterDb);
     this.emitterDb = window.setTimeout(() => {
       if (this.emitter?.events.settingsUpdated?.length) {
         this.emitter.emit('settingsUpdated', undefined);
       }
     }, 5000);
+
     await this.saveData(this.settings);
   }
 }

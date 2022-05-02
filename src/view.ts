@@ -1,4 +1,10 @@
-import { ItemView, MarkdownView, WorkspaceLeaf, setIcon } from 'obsidian';
+import {
+  ItemView,
+  MarkdownView,
+  TFile,
+  WorkspaceLeaf,
+  setIcon,
+} from 'obsidian';
 
 import ReferenceList from './main';
 import { ViewManager } from './viewManager';
@@ -89,7 +95,7 @@ export class ReferenceListView extends ItemView {
         this.viewManager
           .getReferenceList(activeView.file, content)
           .then((bib) => {
-            this.setViewContent(bib);
+            this.setViewContent(activeView.file, bib);
           });
       });
     } else {
@@ -97,11 +103,7 @@ export class ReferenceListView extends ItemView {
     }
   };
 
-  copyToClipboard(el: HTMLElement) {
-    require('electron').clipboard.writeHTML(el.outerHTML);
-  }
-
-  setViewContent(bib: HTMLElement) {
+  setViewContent(file: TFile, bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
       if (this.plugin.settings.hideLinks) {
         bib.findAll('a').forEach((l) => {
@@ -111,6 +113,7 @@ export class ReferenceListView extends ItemView {
 
       bib.findAll('.csl-entry').forEach((e) => {
         e.setAttribute('aria-label', 'Click to copy');
+        e.dataset.source = file.path;
 
         const leafRoot = this.leaf.getRoot();
         if (leafRoot) {
@@ -118,10 +121,6 @@ export class ReferenceListView extends ItemView {
             (leafRoot as any).side === 'right' ? 'left' : 'right';
           e.setAttribute('aria-label-position', tooltipPos);
         }
-
-        e.onClickEvent(() => {
-          this.copyToClipboard(e);
-        });
       });
 
       this.contentEl.empty();
@@ -132,17 +131,13 @@ export class ReferenceListView extends ItemView {
         (div) => {
           div.createDiv({ text: this.getDisplayText() });
           setIcon(
-            div.createDiv(
-              {
-                cls: 'pwc-copy-list',
-                attr: {
-                  'aria-label': 'Copy list',
-                },
+            div.createDiv({
+              cls: 'pwc-copy-list',
+              attr: {
+                'aria-label': 'Copy list',
+                'data-source': file.path,
               },
-              (btn) => {
-                btn.onClickEvent(() => this.copyToClipboard(bib));
-              }
-            ),
+            }),
             'select-all-text'
           );
         }
