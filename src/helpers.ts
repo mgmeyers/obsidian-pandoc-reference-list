@@ -1,4 +1,4 @@
-import { FileSystemAdapter } from 'obsidian';
+import { FileSystemAdapter, htmlToMarkdown } from 'obsidian';
 
 export function getVaultRoot() {
   // This is a desktop only plugin, so assume adapter is FileSystemAdapter
@@ -6,5 +6,8 @@ export function getVaultRoot() {
 }
 
 export function copyElToClipboard(el: HTMLElement) {
-  require('electron').clipboard.writeHTML(el.outerHTML);
+  require('electron').clipboard.write({
+    html: el.outerHTML,
+    text: htmlToMarkdown(el.outerHTML),
+  });
 }

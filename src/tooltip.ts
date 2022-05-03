@@ -60,39 +60,44 @@ export class TooltipManager {
       el.dataset.citekey
     );
 
-    this.tooltip = document.body.createDiv({ cls: 'pwc-tooltip' }, (div) => {
-      // @'s are wrapped on their own, but that's where we want to show the tooltip
-      const prev = el.previousElementSibling;
-      const rect = prev?.hasClass('pandoc-citation')
-        ? prev.getBoundingClientRect()
-        : el.getBoundingClientRect();
+    const modClasses = this.plugin.settings.hideLinks ? ' collapsed-links' : '';
 
-      if (this.plugin.settings.hideLinks) {
-        div.addClass('collapsed-links');
-      }
+    this.tooltip = document.body.createDiv(
+      { cls: `pwc-tooltip${modClasses}` },
+      (div) => {
+        // @'s are wrapped on their own, but that's where we want to show the tooltip
+        const prev = el.previousElementSibling;
+        const rect = prev?.hasClass('pandoc-citation')
+          ? prev.getBoundingClientRect()
+          : el.getBoundingClientRect();
 
-      if (content) {
-        div.innerHTML = content;
-      } else {
-        div.createEl('em', {
-          text: 'No citation found for ' + el.dataset.citekey,
+        if (this.plugin.settings.hideLinks) {
+          div.addClass('collapsed-links');
+        }
+
+        if (content) {
+          div.innerHTML = content;
+        } else {
+          div.createEl('em', {
+            text: 'No citation found for ' + el.dataset.citekey,
+          });
+        }
+
+        setTimeout(() => {
+          const viewport = window.visualViewport;
+          const divRect = div.getBoundingClientRect();
+
+          div.style.left =
+            rect.x + divRect.width + 10 > viewport.width
+              ? `${rect.x - (rect.x + divRect.width + 10 - viewport.width)}px`
+              : `${rect.x}px`;
+          div.style.top =
+            rect.bottom + divRect.height + 10 > viewport.height
+              ? `${rect.y - divRect.height - 5}px`
+              : `${rect.bottom + 5}px`;
         });
       }
-
-      setTimeout(() => {
-        const viewport = window.visualViewport;
-        const divRect = div.getBoundingClientRect();
-
-        div.style.left =
-          rect.x + divRect.width + 10 > viewport.width
-            ? `${rect.x - (rect.x + divRect.width + 10 - viewport.width)}px`
-            : `${rect.x}px`;
-        div.style.top =
-          rect.bottom + divRect.height + 10 > viewport.height
-            ? `${rect.y - divRect.height - 5}px`
-            : `${rect.bottom + 5}px`;
-      });
-    });
+    );
   }
 
   destroy = () => {

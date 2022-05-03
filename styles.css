@@ -1,6 +1,8 @@
-.pwc-reference-list {
+body {
   --pwc-font-size: 14px;
+}
 
+.pwc-reference-list {
   padding-bottom: 2rem;
 }
 
@@ -94,6 +96,7 @@
 }
 
 .pwc-tooltip {
+  word-wrap: break-word;
   position: fixed;
   font-family: var(--font-interface);
   font-size: 14px;
