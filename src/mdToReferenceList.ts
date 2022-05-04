@@ -63,8 +63,9 @@ export async function pandocMarkdownToHTML(
   try {
     const pathToPandoc = await which('pandoc');
     const result = await execa(pathToPandoc || settings.pathToPandoc, args, {
-      input: `---\nnocite: ${Array.from(keys).join(', ')}\n---\n`,
+      input: `---\nnocite: "${Array.from(keys).join(', ')}"\n---\n`,
     });
+
 
     // istanbul ignore next
     if (result.stderr) {
