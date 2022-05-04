@@ -1,4 +1,5 @@
 import { RangeSetBuilder } from '@codemirror/rangeset';
+import { StateEffect, StateField } from '@codemirror/state';
 import {
   Decoration,
   DecorationSet,
@@ -6,11 +7,10 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
-import { StateField, StateEffect } from '@codemirror/state';
 import { editorViewField } from 'obsidian';
 
-import { ViewManager } from './viewManager';
 import { citeRegExp, multiCiteRegExp } from './regExps';
+import { ViewManager } from './viewManager';
 
 const citeMark = (
   citekey: string,

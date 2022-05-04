@@ -3,8 +3,8 @@ import path from 'path';
 import { execa } from 'execa';
 import which from 'which';
 
-import { ReferenceListSettings } from './settings';
 import { citekeyRegExp } from './regExps';
+import { ReferenceListSettings } from './settings';
 
 export function areSetsEqual<T>(as: Set<T>, bs: Set<T>) {
   if (as.size !== bs.size) return false;
@@ -65,7 +65,6 @@ export async function pandocMarkdownToHTML(
     const result = await execa(pathToPandoc || settings.pathToPandoc, args, {
       input: `---\nnocite: "${Array.from(keys).join(', ')}"\n---\n`,
     });
-
 
     // istanbul ignore next
     if (result.stderr) {

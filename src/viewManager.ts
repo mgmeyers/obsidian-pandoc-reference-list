@@ -1,8 +1,8 @@
 import { EditorView } from '@codemirror/view';
-
 import LRUCache from 'lru-cache';
 import { MarkdownView, TFile } from 'obsidian';
 
+import { setResolvedCiteKeys } from './editorExtension';
 import ReferenceList from './main';
 import {
   areSetsEqual,
@@ -10,7 +10,6 @@ import {
   pandocHTMLToBibFragment,
   pandocMarkdownToHTML,
 } from './mdToReferenceList';
-import { setResolvedCiteKeys } from './editorExtension';
 
 interface DocCache {
   keys: Set<string>;
