@@ -1,7 +1,15 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
 
-import { citeRegExp, multiCiteRegExp } from './editorExtension';
 import ReferenceList from './main';
+import { citeRegExp, multiCiteRegExp } from './regExps';
+
+function getCiteClass(isPrefix: boolean, haveEntryForCiteKey: boolean) {
+  const cls = ['pandoc-citation'];
+  if (isPrefix) cls.push('pandoc-citation-at');
+  if (!haveEntryForCiteKey) cls.push('is-missing');
+
+  return cls.join(' ');
+}
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function processCiteKeys(plugin: ReferenceList) {
@@ -32,8 +40,13 @@ export function processCiteKeys(plugin: ReferenceList) {
                 const multiCite = match[i];
                 let m2;
                 while ((m2 = multiCiteRegExp.exec(multiCite))) {
+                  const haveEntryForCiteKey =
+                    plugin.view?.viewManager.haveEntryForCiteKey(
+                      ctx.sourcePath,
+                      m2[1]
+                    );
                   frag.createSpan({
-                    cls: `pandoc-citation pandoc-citation-at`,
+                    cls: getCiteClass(true, haveEntryForCiteKey),
                     text: m2[1][0],
                     attr: {
                       'data-citekey': m2[1],
@@ -41,7 +54,7 @@ export function processCiteKeys(plugin: ReferenceList) {
                     },
                   });
                   frag.createSpan({
-                    cls: `pandoc-citation`,
+                    cls: getCiteClass(false, haveEntryForCiteKey),
                     text: m2[1].slice(1),
                     attr: {
                       'data-citekey': m2[1],
@@ -62,8 +75,13 @@ export function processCiteKeys(plugin: ReferenceList) {
               continue;
             case 6:
               if (match[i]) {
+                const haveEntryForCiteKey =
+                  plugin.view?.viewManager.haveEntryForCiteKey(
+                    ctx.sourcePath,
+                    match[i]
+                  );
                 frag.createSpan({
-                  cls: `pandoc-citation pandoc-citation-at`,
+                  cls: getCiteClass(true, haveEntryForCiteKey),
                   text: match[i][0],
                   attr: {
                     'data-citekey': match[i],
@@ -71,7 +89,7 @@ export function processCiteKeys(plugin: ReferenceList) {
                   },
                 });
                 frag.createSpan({
-                  cls: `pandoc-citation`,
+                  cls: getCiteClass(false, haveEntryForCiteKey),
                   text: match[i].slice(1),
                   attr: {
                     'data-citekey': match[i],

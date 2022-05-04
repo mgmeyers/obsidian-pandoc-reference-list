@@ -4,6 +4,7 @@ import { execa } from 'execa';
 import which from 'which';
 
 import { ReferenceListSettings } from './settings';
+import { citekeyRegExp } from './regExps';
 
 export function areSetsEqual<T>(as: Set<T>, bs: Set<T>) {
   if (as.size !== bs.size) return false;
@@ -18,10 +19,8 @@ function resolveHome(filepath: string) {
   return filepath;
 }
 
-const citekeyRe = /(@[^@\s[\];,]+)/g;
-
 export function extractCiteKeys(md: string): Set<string> {
-  const matches = md.matchAll(citekeyRe);
+  const matches = md.matchAll(citekeyRegExp);
   const output = new Set<string>();
 
   for (const match of matches) {
@@ -35,14 +34,10 @@ export function extractCiteKeys(md: string): Set<string> {
 
 export async function pandocMarkdownToHTML(
   settings: ReferenceListSettings,
-  filePath: string
+  keys: Set<string>
 ): Promise<string> {
   if (!settings.pathToPandoc) {
     throw new Error('Error: pandocMarkdownToHTML path to pandoc is required');
-  }
-
-  if (!filePath) {
-    throw new Error('Error: pandocMarkdownToHTML file path is required');
   }
 
   if (!settings.pathToBibliography) {
@@ -52,7 +47,8 @@ export async function pandocMarkdownToHTML(
   }
 
   const args = [
-    resolveHome(filePath),
+    '-f',
+    'markdown',
     '-t',
     'html',
     '--citeproc',
@@ -66,7 +62,9 @@ export async function pandocMarkdownToHTML(
 
   try {
     const pathToPandoc = await which('pandoc');
-    const result = await execa(pathToPandoc || settings.pathToPandoc, args);
+    const result = await execa(pathToPandoc || settings.pathToPandoc, args, {
+      input: `---\nnocite: ${Array.from(keys).join(', ')}\n---\n`,
+    });
 
     // istanbul ignore next
     if (result.stderr) {

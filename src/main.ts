@@ -3,7 +3,11 @@ import { Plugin, WorkspaceLeaf } from 'obsidian';
 import { shellPath } from 'shell-path';
 import which from 'which';
 
-import { citeKeyPlugin } from './editorExtension';
+import {
+  citeKeyPlugin,
+  resolvedCiteKeysField,
+  viewManagerField,
+} from './editorExtension';
 import { Emitter, createEmitter } from './emitter';
 import { copyElToClipboard } from './helpers';
 import { processCiteKeys } from './markdownPostprocessor';
@@ -69,7 +73,11 @@ export default class ReferenceList extends Plugin {
     }
 
     this.register(this.initDelegatedEvents());
-    this.registerEditorExtension(citeKeyPlugin(this));
+    this.registerEditorExtension([
+      viewManagerField.init(() => this.view?.viewManager || null),
+      resolvedCiteKeysField,
+      citeKeyPlugin,
+    ]);
     this.registerMarkdownPostProcessor(processCiteKeys(this));
     this.tooltipManager = new TooltipManager(this);
 

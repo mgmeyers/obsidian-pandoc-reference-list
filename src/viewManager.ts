@@ -1,9 +1,8 @@
-import path from 'path';
+import { EditorView } from '@codemirror/view';
 
 import LRUCache from 'lru-cache';
 import { MarkdownView, TFile } from 'obsidian';
 
-import { getVaultRoot } from './helpers';
 import ReferenceList from './main';
 import {
   areSetsEqual,
@@ -11,9 +10,11 @@ import {
   pandocHTMLToBibFragment,
   pandocMarkdownToHTML,
 } from './mdToReferenceList';
+import { setResolvedCiteKeys } from './editorExtension';
 
 interface DocCache {
   keys: Set<string>;
+  resolvedKeys: Set<string>;
   bib: HTMLElement;
 }
 
@@ -56,23 +57,32 @@ export class ViewManager {
 
     if (!cachedDoc || !areSetsEqual(cachedDoc.keys, citeKeys)) {
       try {
+        const bib = pandocHTMLToBibFragment(
+          await pandocMarkdownToHTML(this.plugin.settings, citeKeys)
+        );
+
         const result = {
           keys: citeKeys,
-          bib: pandocHTMLToBibFragment(
-            await pandocMarkdownToHTML(
-              this.plugin.settings,
-              path.join(getVaultRoot(), file.path)
-            )
-          ),
+          resolvedKeys: this.getResolvedKeys(bib),
+          bib: bib,
         };
 
         this.cache.set(file, result);
 
-        const activeView = app.workspace.getActiveViewOfType(MarkdownView);
+        app.workspace.getLeavesOfType('markdown').find((l) => {
+          const view = l.view as MarkdownView;
+          if (view.file === file) {
+            view.previewMode.rerender(true);
 
-        if (activeView) {
-          activeView.editor.refresh();
-        }
+            const cm = (view.editor as any).cm as EditorView;
+
+            if (cm.dispatch) {
+              cm.dispatch({
+                effects: [setResolvedCiteKeys.of(result.resolvedKeys)],
+              });
+            }
+          }
+        });
 
         return result.bib;
       } catch (e) {
@@ -86,6 +96,14 @@ export class ViewManager {
     return cachedDoc.bib;
   }
 
+  getResolvedKeys(bib: HTMLElement) {
+    return new Set(
+      bib
+        .findAll('.csl-entry')
+        .map((e) => e.getAttr('id').replace(/^ref-/, '@'))
+    );
+  }
+
   getReferenceListForSource(filePath: string) {
     const file = app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile && this.cache.has(file)) {
@@ -96,7 +114,7 @@ export class ViewManager {
   haveEntryForCiteKey(filePath: string, key: string) {
     const file = app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile && this.cache.has(file)) {
-      return this.cache.get(file).keys.has(key);
+      return this.cache.get(file).resolvedKeys.has(key);
     }
 
     return false;

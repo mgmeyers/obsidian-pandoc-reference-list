@@ -111,11 +111,11 @@ body {
   overflow: hidden;
 }
 
-.pandoc-citation {
+:not(.cm-hmd-internal-link) > .pandoc-citation {
   color: var(--text-normal);
 }
 
-.cm-pandoc-citation-formatting {
+:not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
   color: var(--text-muted);
 }
 
@@ -128,4 +128,12 @@ body {
   text-decoration-style: dotted;
   text-decoration-thickness: 2px;
   text-decoration-color: var(--text-accent);
+}
+
+.pwc-tooltips .pandoc-citation.is-missing {
+  text-decoration-color: rgb(255, 149, 0);
+}
+
+.pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-missing {
+  color: var(--text-muted);
 }
