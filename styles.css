@@ -1,5 +1,83 @@
+/* @settings
+
+name: Pandoc Reference List
+id: pandoc-reference-list
+settings:
+  - 
+    id: pwc-font-size
+    title: Sidebar reference list font size
+    type: variable-number-slider
+    default: 14
+    format: px
+    min: 8
+    max: 24
+    step: 1
+  - 
+    id: pwc-tooltip-font-size
+    title: Tooltip citation font size
+    type: variable-number-slider
+    default: 14
+    format: px
+    min: 8
+    max: 24
+    step: 1
+  - 
+    id: pwc-citation-color
+    title: Citation color
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+  - 
+    id: pwc-citation-color-missing
+    title: Unresolved citation color
+    description: This color will be applied if a citekey is not found in your bibliography file
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+  - 
+    id: pwc-citation-underline-color
+    title: Citation underline color
+    type: variable-themed-color
+    format: hex
+    default-light: '#705dcf'
+    default-dark: '#7f6df2'
+  - 
+    id: pwc-citation-underline-color-missing
+    title: Unresolved citation underline color
+    description: This color will be applied if a citekey is not found in your bibliography file
+    type: variable-themed-color
+    format: hex
+    default-light: '#'
+    default-dark: '#'
+  - 
+    id: pwc-citation-formatting-color
+    title: Citation formatting color
+    description: Changes the color of brackets and semicolons
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+  - 
+    id: pwc-citation-extra-color
+    title: 'Citation "extra" color'
+    description: 'Changes the color text within a citation, eg. "pp. 22-24"'
+    type: variable-themed-color
+    format: hex
+    default-light: '#2e3338'
+    default-dark: '#dcddde'
+*/
+
 body {
   --pwc-font-size: 14px;
+  --pwc-tooltip-font-size: 14px;
+  --pwc-citation-underline-color: var(--text-accent);
+  --pwc-citation-underline-color-missing: transparent;
+  --pwc-citation-extra-color: var(--text-normal);
+  --pwc-citation-formatting-color: var(--text-normal);
+  --pwc-citation-color: var(--text-normal);
+  --pwc-citation-color-missing: var(--text-normal);
 }
 
 .pwc-reference-list {
@@ -99,7 +177,7 @@ body {
   word-wrap: break-word;
   position: fixed;
   font-family: var(--font-interface);
-  font-size: 14px;
+  font-size: var(--pwc-tooltip-font-size);
   padding: 10px;
   background-color: var(--background-primary);
   border: 1px solid var(--background-modifier-border);
@@ -112,28 +190,28 @@ body {
 }
 
 :not(a, .cm-hmd-internal-link) > .pandoc-citation {
-  color: var(--text-normal);
+  color: var(--pwc-citation-color);
 }
 
 :not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
-  color: var(--text-muted);
+  color: var(--pwc-citation-formatting-color);
 }
 
 .cm-pandoc-citation-extra {
-  color: var(--text-normal);
+  color: var(--pwc-citation-extra-color);
 }
 
 .pwc-tooltips .pandoc-citation {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-thickness: 2px;
-  text-decoration-color: var(--text-accent);
+  text-decoration-color: var(--pwc-citation-underline-color);
 }
 
 .pwc-tooltips .pandoc-citation.is-missing {
-  text-decoration: none;
+  text-decoration-color: var(--pwc-citation-underline-color-missing);
 }
-/* 
+
 .pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-missing {
-  color: var(--text-muted);
-} */
+  color: var(--pwc-citation-color-missing);
+}

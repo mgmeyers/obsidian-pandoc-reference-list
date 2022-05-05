@@ -45,5 +45,5 @@ export default {
   'No citation found for ': 'No citation found for ',
 
   // src/main.ts
-  'Open view': 'Open view'
+  'Open view': 'Open view',
 };

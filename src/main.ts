@@ -93,6 +93,8 @@ export default class ReferenceList extends Plugin {
       },
     });
 
+    app.workspace.trigger('parse-style-settings');
+
     await fixPath();
 
     if (!this.settings.pathToPandoc) {
