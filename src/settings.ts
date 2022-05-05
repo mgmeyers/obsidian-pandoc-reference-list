@@ -42,7 +42,9 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
         setting.addExtraButton((b) => {
           b.setIcon('folder');
-          b.setTooltip('Select a bibliography file');
+          b.setTooltip(
+            'Select a bibliography file. This can be overridden on a per-file basis by setting "bibliography" in the file\'s frontmatter.'
+          );
           b.onClick(() => {
             const path = require('electron').remote.dialog.showOpenDialogSync({
               properties: ['openFile'],
@@ -59,7 +61,9 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Path or URL to CSL File')
+      .setName(
+        'Path or URL to CSL File. This can be overridden on a per-file basis by setting "csl" or "citation-style" in the file\'s frontmatter.'
+      )
       .setDesc(
         'The absolute path or URL your desired citation style file. Pandoc will default to Chicago Manual of Style if this is not set.'
       )
