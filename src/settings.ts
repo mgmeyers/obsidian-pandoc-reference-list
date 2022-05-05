@@ -1,6 +1,7 @@
 import { Notice, PluginSettingTab, Setting, TextComponent } from 'obsidian';
 import which from 'which';
 
+import { t } from './lang/helpers';
 import ReferenceList from './main';
 
 export interface ReferenceListSettings {
@@ -26,8 +27,8 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName('Path to Bibliography File')
-      .setDesc('The absolute path to your desired bibliography file.')
+      .setName(t('Path to Bibliography File'))
+      .setDesc(t('The absolute path to your desired bibliography file.'))
       .then((setting) => {
         let input: TextComponent;
         setting.addText((text) => {
@@ -43,7 +44,9 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
         setting.addExtraButton((b) => {
           b.setIcon('folder');
           b.setTooltip(
-            'Select a bibliography file. This can be overridden on a per-file basis by setting "bibliography" in the file\'s frontmatter.'
+            t(
+              'Select a bibliography file. This can be overridden on a per-file basis by setting "bibliography" in the file\'s frontmatter.'
+            )
           );
           b.onClick(() => {
             const path = require('electron').remote.dialog.showOpenDialogSync({
@@ -62,10 +65,14 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName(
-        'Path or URL to CSL File. This can be overridden on a per-file basis by setting "csl" or "citation-style" in the file\'s frontmatter.'
+        t(
+          'Path or URL to CSL File. This can be overridden on a per-file basis by setting "csl" or "citation-style" in the file\'s frontmatter.'
+        )
       )
       .setDesc(
-        'The absolute path or URL your desired citation style file. Pandoc will default to Chicago Manual of Style if this is not set.'
+        t(
+          'The absolute path or URL your desired citation style file. Pandoc will default to Chicago Manual of Style if this is not set.'
+        )
       )
       .then((setting) => {
         let input: TextComponent;
@@ -79,7 +86,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
         setting.addExtraButton((b) => {
           b.setIcon('folder');
-          b.setTooltip('Select a CSL file located on your computer');
+          b.setTooltip(t('Select a CSL file located on your computer'));
           b.onClick(() => {
             const path = require('electron').remote.dialog.showOpenDialogSync({
               properties: ['openFile'],
@@ -96,9 +103,11 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Fallback Path to Pandoc')
+      .setName(t('Fallback Path to Pandoc'))
       .setDesc(
-        "The absolute path to the pandoc executable. This plugin will attempt to locate pandoc for you and will use this path if it fails to do so. To find pandoc, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
+        t(
+          "The absolute path to the pandoc executable. This plugin will attempt to locate pandoc for you and will use this path if it fails to do so. To find pandoc, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
+        )
       )
       .then((setting) => {
         let input: TextComponent;
@@ -112,7 +121,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
         setting.addExtraButton((b) => {
           b.setIcon('magnifying-glass');
-          b.setTooltip('Attempt to find pandoc automatically');
+          b.setTooltip(t('Attempt to find pandoc automatically'));
           b.onClick(() => {
             which('pandoc')
               .then((pathToPandoc) => {
@@ -123,13 +132,17 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
                   this.plugin.saveSettings();
                 } else {
                   new Notice(
-                    'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                    t(
+                      'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                    )
                   );
                 }
               })
               .catch((e) => {
                 new Notice(
-                  'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                  t(
+                    'Unable to find pandoc on your system. If it is installed, please manually enter a path.'
+                  )
                 );
                 console.error(e);
               });
@@ -138,8 +151,8 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName('Hide Links')
-      .setDesc('Replace links with link icons to save space.')
+      .setName(t('Hide Links'))
+      .setDesc(t('Replace links with link icons to save space.'))
       .addToggle((text) =>
         text.setValue(!!this.plugin.settings.hideLinks).onChange((value) => {
           this.plugin.settings.hideLinks = value;
@@ -148,9 +161,11 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Show Citekey Tooltips')
+      .setName(t('Show Citekey Tooltips'))
       .setDesc(
-        'When enabled, hovering over citekeys will open a tooltip containing a formatted citation.'
+        t(
+          'When enabled, hovering over citekeys will open a tooltip containing a formatted citation.'
+        )
       )
       .addToggle((text) =>
         text
@@ -162,9 +177,11 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName('Tooltip Delay')
+      .setName(t('Tooltip Delay'))
       .setDesc(
-        'Set the amount of time (in milliseconds) to wait before displaying tooltips.'
+        t(
+          'Set the amount of time (in milliseconds) to wait before displaying tooltips.'
+        )
       )
       .addSlider((slider) => {
         slider

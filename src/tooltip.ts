@@ -1,6 +1,7 @@
 import delegate from 'delegate';
 import { TFile } from 'obsidian';
 
+import { t } from './lang/helpers';
 import ReferenceList from './main';
 
 export class TooltipManager {
@@ -80,7 +81,7 @@ export class TooltipManager {
         } else {
           div.addClass('is-missing');
           div.createEl('em', {
-            text: 'No citation found for ' + el.dataset.citekey,
+            text: t('No citation found for ') + el.dataset.citekey,
           });
         }
 

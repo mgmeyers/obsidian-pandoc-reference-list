@@ -6,6 +6,7 @@ import {
   setIcon,
 } from 'obsidian';
 
+import { t } from './lang/helpers';
 import ReferenceList from './main';
 import { ViewManager } from './viewManager';
 
@@ -78,7 +79,9 @@ export class ReferenceListView extends ItemView {
   processReferences = () => {
     if (!this.plugin.settings.pathToPandoc) {
       return this.setMessage(
-        'Please provide the path to pandoc in the Pandoc Reference List plugin settings.'
+        t(
+          'Please provide the path to pandoc in the Pandoc Reference List plugin settings.'
+        )
       );
     }
 
@@ -112,7 +115,7 @@ export class ReferenceListView extends ItemView {
       }
 
       bib.findAll('.csl-entry').forEach((e) => {
-        e.setAttribute('aria-label', 'Click to copy');
+        e.setAttribute('aria-label', t('Click to copy'));
         e.dataset.source = file.path;
 
         const leafRoot = this.leaf.getRoot();
@@ -134,7 +137,7 @@ export class ReferenceListView extends ItemView {
             div.createDiv({
               cls: 'pwc-copy-list',
               attr: {
-                'aria-label': 'Copy list',
+                'aria-label': t('Copy list'),
                 'data-source': file.path,
               },
             }),
@@ -149,7 +152,7 @@ export class ReferenceListView extends ItemView {
   }
 
   setNoContentMessage() {
-    this.setMessage('No citations found in the active document.');
+    this.setMessage(t('No citations found in the active document.'));
   }
 
   setMessage(message: string) {
@@ -165,7 +168,7 @@ export class ReferenceListView extends ItemView {
   }
 
   getDisplayText() {
-    return 'References';
+    return t('References');
   }
 
   getIcon() {

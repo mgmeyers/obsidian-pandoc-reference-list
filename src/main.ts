@@ -10,6 +10,7 @@ import {
 } from './editorExtension';
 import { Emitter, createEmitter } from './emitter';
 import { copyElToClipboard } from './helpers';
+import { t } from './lang/helpers';
 import { processCiteKeys } from './markdownPostprocessor';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';
 import { TooltipManager } from './tooltip';
@@ -83,7 +84,7 @@ export default class ReferenceList extends Plugin {
 
     this.addCommand({
       id: 'show-reference-list-view',
-      name: 'Open view',
+      name: t('Open view'),
       checkCallback: (checking: boolean) => {
         if (checking) {
           return this.app.workspace.getLeavesOfType(viewType).length === 0;
