@@ -131,9 +131,9 @@ body {
 }
 
 .pwc-tooltips .pandoc-citation.is-missing {
-  text-decoration-color: rgb(255, 149, 0);
+  text-decoration: none;
 }
-
+/* 
 .pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-missing {
   color: var(--text-muted);
-}
+} */
