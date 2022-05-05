@@ -21,6 +21,10 @@ export function processCiteKeys(plugin: ReferenceList) {
     while ((node = walker.nextNode())) {
       const content = node.nodeValue;
 
+      if (node.parentElement && node.parentElement.tagName === 'CODE') {
+        continue;
+      }
+
       let frag = createFragment();
       let match;
       let pos = 0;

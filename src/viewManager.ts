@@ -10,11 +10,42 @@ import {
   pandocHTMLToBibFragment,
   pandocMarkdownToHTML,
 } from './mdToReferenceList';
+import { ReferenceListSettings } from './settings';
 
 interface DocCache {
   keys: Set<string>;
   resolvedKeys: Set<string>;
   bib: HTMLElement;
+  cslStyle?: string;
+  pathToBibliography?: string;
+}
+
+function getCSLStyle(file: TFile, settings: ReferenceListSettings) {
+  const metadata = app.metadataCache.getFileCache(file);
+
+  if (!metadata.frontmatter) {
+    return settings.cslStyle;
+  }
+
+  if (metadata.frontmatter.csl) {
+    return metadata.frontmatter.csl;
+  }
+
+  if (metadata.frontmatter['citation-style']) {
+    return metadata.frontmatter.csl;
+  }
+
+  return settings.cslStyle;
+}
+
+function getBibliography(file: TFile, settings: ReferenceListSettings) {
+  const metadata = app.metadataCache.getFileCache(file);
+
+  if (metadata.frontmatter?.bibliography) {
+    return metadata.frontmatter.bibliography;
+  }
+
+  return settings.pathToBibliography;
 }
 
 export class ViewManager {
@@ -53,17 +84,33 @@ export class ViewManager {
     }
 
     const cachedDoc = this.cache.has(file) ? this.cache.get(file) : null;
+    const cslStyle = getCSLStyle(file, this.plugin.settings);
+    const pathToBibliography = getBibliography(file, this.plugin.settings);
 
-    if (!cachedDoc || !areSetsEqual(cachedDoc.keys, citeKeys)) {
+    if (
+      !cachedDoc ||
+      !areSetsEqual(cachedDoc.keys, citeKeys) ||
+      cachedDoc.cslStyle !== cslStyle ||
+      cachedDoc.pathToBibliography !== pathToBibliography
+    ) {
       try {
         const bib = pandocHTMLToBibFragment(
-          await pandocMarkdownToHTML(this.plugin.settings, citeKeys)
+          await pandocMarkdownToHTML(
+            {
+              ...this.plugin.settings,
+              cslStyle,
+              pathToBibliography,
+            },
+            citeKeys
+          )
         );
 
         const result = {
           keys: citeKeys,
           resolvedKeys: this.getResolvedKeys(bib),
           bib: bib,
+          cslStyle,
+          pathToBibliography,
         };
 
         this.cache.set(file, result);

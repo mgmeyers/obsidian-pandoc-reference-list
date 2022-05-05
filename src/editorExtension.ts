@@ -1,5 +1,7 @@
+import { syntaxTree } from '@codemirror/language';
 import { RangeSetBuilder } from '@codemirror/rangeset';
 import { StateEffect, StateField } from '@codemirror/state';
+import { tokenClassNodeProp } from '@codemirror/stream-parser';
 import {
   Decoration,
   DecorationSet,
@@ -7,10 +9,13 @@ import {
   ViewPlugin,
   ViewUpdate,
 } from '@codemirror/view';
+import { Tree } from '@lezer/common';
 import { editorViewField } from 'obsidian';
 
 import { citeRegExp, multiCiteRegExp } from './regExps';
 import { ViewManager } from './viewManager';
+
+const ignoreListRegEx = /code|math|templater|hashtag/;
 
 const citeMark = (
   citekey: string,
@@ -65,12 +70,25 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
       const obsView = view.state.field(editorViewField);
       const resolvedKeys = view.state.field(resolvedCiteKeysField);
 
+      // Don't get the syntax tree until we have to
+      let tree: Tree;
+
       for (const { from, to } of view.visibleRanges) {
         const range = view.state.sliceDoc(from, to);
         let match;
 
         while ((match = citeRegExp.exec(range))) {
           let pos = from + match.index;
+
+          if (!tree) tree = syntaxTree(view.state);
+
+          const nodeProps = tree
+            .resolveInner(pos, 1)
+            .type.prop(tokenClassNodeProp);
+
+          if (nodeProps && ignoreListRegEx.test(nodeProps)) {
+            continue;
+          }
 
           // Loop through the 10 possible groups
           for (let i = 1; i <= 10; i++) {

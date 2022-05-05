@@ -111,7 +111,7 @@ body {
   overflow: hidden;
 }
 
-:not(.cm-hmd-internal-link) > .pandoc-citation {
+:not(a, .cm-hmd-internal-link) > .pandoc-citation {
   color: var(--text-normal);
 }
 

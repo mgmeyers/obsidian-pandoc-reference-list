@@ -78,6 +78,7 @@ export class TooltipManager {
         if (content) {
           div.innerHTML = content;
         } else {
+          div.addClass('is-missing');
           div.createEl('em', {
             text: 'No citation found for ' + el.dataset.citekey,
           });
