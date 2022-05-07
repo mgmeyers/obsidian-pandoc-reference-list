@@ -65,13 +65,9 @@ export default class ReferenceList extends Plugin {
       !!this.settings.showCitekeyTooltips
     );
 
-    if (this.app.workspace.layoutReady) {
+    this.app.workspace.onLayoutReady(() => {
       this.initLeaf();
-    } else {
-      this.app.workspace.onLayoutReady(() => {
-        this.initLeaf();
-      });
-    }
+    });
 
     this.register(this.initDelegatedEvents());
     this.registerEditorExtension([
@@ -95,24 +91,25 @@ export default class ReferenceList extends Plugin {
 
     app.workspace.trigger('parse-style-settings');
 
-    await fixPath();
-
-    if (!this.settings.pathToPandoc) {
-      try {
-        // Attempt to find if/where pandoc is located on the user's machine
-        const pathToPandoc = await which('pandoc');
-        this.settings.pathToPandoc = pathToPandoc;
-        this.saveSettings();
-      } catch {
-        // We can ignore any errors here
+    // No need to block execution
+    fixPath().then(async () => {
+      if (!this.settings.pathToPandoc) {
+        try {
+          // Attempt to find if/where pandoc is located on the user's machine
+          const pathToPandoc = await which('pandoc');
+          this.settings.pathToPandoc = pathToPandoc;
+          this.saveSettings();
+        } catch {
+          // We can ignore any errors here
+        }
       }
-    }
 
-    // We don't want to attempt to execute pandoc until we've had a chance to fix PATH
-    if (this.emitter?.events.settingsUpdated?.length) {
-      this.isReady = true;
-      this.emitter.emit('ready', undefined);
-    }
+      // We don't want to attempt to execute pandoc until we've had a chance to fix PATH
+      if (this.emitter?.events.settingsUpdated?.length) {
+        this.isReady = true;
+        this.emitter.emit('ready', undefined);
+      }
+    });
   }
 
   onunload() {
@@ -125,6 +122,7 @@ export default class ReferenceList extends Plugin {
     if (this.app.workspace.getLeavesOfType(viewType).length) {
       return;
     }
+
     this.app.workspace.getRightLeaf(false).setViewState({
       type: viewType,
     });

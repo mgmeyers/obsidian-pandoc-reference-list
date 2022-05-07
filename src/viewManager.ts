@@ -23,7 +23,7 @@ interface DocCache {
 function getCSLStyle(file: TFile, settings: ReferenceListSettings) {
   const metadata = app.metadataCache.getFileCache(file);
 
-  if (!metadata.frontmatter) {
+  if (!metadata?.frontmatter) {
     return settings.cslStyle;
   }
 
@@ -41,7 +41,7 @@ function getCSLStyle(file: TFile, settings: ReferenceListSettings) {
 function getBibliography(file: TFile, settings: ReferenceListSettings) {
   const metadata = app.metadataCache.getFileCache(file);
 
-  if (metadata.frontmatter?.bibliography) {
+  if (metadata?.frontmatter?.bibliography) {
     return metadata.frontmatter.bibliography;
   }
 
