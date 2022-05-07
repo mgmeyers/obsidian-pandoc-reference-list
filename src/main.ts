@@ -47,8 +47,17 @@ export default class ReferenceList extends Plugin {
   settings: ReferenceListSettings;
   emitter: Emitter<ViewEvents>;
   isReady: boolean = false;
-  view: ReferenceListView;
   tooltipManager: TooltipManager;
+
+  get view() {
+    const leaves = app.workspace.getLeavesOfType(viewType);
+
+    if (!leaves?.length) {
+      return null;
+    }
+
+    return leaves[0].view as ReferenceListView;
+  }
 
   async onload() {
     await this.loadSettings();
@@ -56,8 +65,7 @@ export default class ReferenceList extends Plugin {
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
     this.registerView(viewType, (leaf: WorkspaceLeaf) => {
-      this.view = new ReferenceListView(leaf, this);
-      return this.view;
+      return new ReferenceListView(leaf, this);
     });
 
     document.body.toggleClass(
@@ -83,7 +91,7 @@ export default class ReferenceList extends Plugin {
       name: t('Open view'),
       checkCallback: (checking: boolean) => {
         if (checking) {
-          return this.app.workspace.getLeavesOfType(viewType).length === 0;
+          return this.view === null;
         }
         this.initLeaf();
       },
@@ -119,7 +127,7 @@ export default class ReferenceList extends Plugin {
   }
 
   initLeaf(): void {
-    if (this.app.workspace.getLeavesOfType(viewType).length) {
+    if (this.view) {
       return;
     }
 
@@ -138,7 +146,7 @@ export default class ReferenceList extends Plugin {
     const listListener = delegate('.pwc-copy-list', 'click', (e: any) => {
       if (e.delegateTarget) {
         const path = e.delegateTarget.dataset.source;
-        let bib = this.view.viewManager.getReferenceListForSource(path);
+        let bib = this.view?.viewManager.getReferenceListForSource(path);
 
         if (bib) {
           copyElToClipboard(bib);
