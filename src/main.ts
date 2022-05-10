@@ -23,14 +23,20 @@ async function fixPath() {
     return;
   }
 
-  process.env.PATH =
-    (await shellPath()) ||
-    [
-      './node_modules/.bin',
-      '/.nodebrew/current/bin',
-      '/usr/local/bin',
-      process.env.PATH,
-    ].join(':');
+  try {
+    const path = await shellPath();
+
+    process.env.PATH =
+      path ||
+      [
+        './node_modules/.bin',
+        '/.nodebrew/current/bin',
+        '/usr/local/bin',
+        process.env.PATH,
+      ].join(':');
+  } catch (e) {
+    console.error(e);
+  }
 }
 
 const DEFAULT_SETTINGS: ReferenceListSettings = {
@@ -112,9 +118,10 @@ export default class ReferenceList extends Plugin {
         }
       }
 
+      this.isReady = true;
+
       // We don't want to attempt to execute pandoc until we've had a chance to fix PATH
       if (this.emitter?.events.settingsUpdated?.length) {
-        this.isReady = true;
         this.emitter.emit('ready', undefined);
       }
     });

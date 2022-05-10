@@ -20,7 +20,7 @@ export class ReferenceListView extends ItemView {
   async onClose() {
     this.viewManager.cache.clear();
     this.plugin.emitter.off('ready', this.processReferences);
-    this.plugin.emitter.off('settingsUpdated', this.processReferences);
+    this.plugin.emitter.off('settingsUpdated', this.handleSettingsUpdate);
     return super.onClose();
   }
 
@@ -55,10 +55,9 @@ export class ReferenceListView extends ItemView {
 
     if (this.plugin.isReady) {
       this.processReferences();
-    } else {
-      this.plugin.emitter.on('ready', this.processReferences);
     }
 
+    this.plugin.emitter.on('ready', this.processReferences);
     this.plugin.emitter.on('settingsUpdated', this.handleSettingsUpdate);
     this.contentEl.addClass('pwc-reference-list');
     this.contentEl.toggleClass(
@@ -68,12 +67,14 @@ export class ReferenceListView extends ItemView {
   }
 
   handleSettingsUpdate = () => {
-    this.contentEl.toggleClass(
-      'collapsed-links',
-      !!this.plugin.settings.hideLinks
-    );
+    if (this.plugin.isReady) {
+      this.contentEl.toggleClass(
+        'collapsed-links',
+        !!this.plugin.settings.hideLinks
+      );
 
-    this.processReferences();
+      this.processReferences();
+    }
   };
 
   processReferences = () => {
