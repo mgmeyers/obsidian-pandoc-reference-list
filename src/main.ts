@@ -1,5 +1,4 @@
-import delegate from 'delegate';
-import { Plugin, WorkspaceLeaf } from 'obsidian';
+import { debounce, Events, Plugin, WorkspaceLeaf } from 'obsidian';
 import { shellPath } from 'shell-path';
 import which from 'which';
 
@@ -8,8 +7,6 @@ import {
   citeKeyPlugin,
   viewManagerField,
 } from './editorExtension';
-import { Emitter, createEmitter } from './emitter';
-import { copyElToClipboard } from './helpers';
 import { t } from './lang/helpers';
 import { processCiteKeys } from './markdownPostprocessor';
 import { ReferenceListSettings, ReferenceListSettingsTab } from './settings';
@@ -44,16 +41,12 @@ const DEFAULT_SETTINGS: ReferenceListSettings = {
   tooltipDelay: 800,
 };
 
-interface ViewEvents {
-  settingsUpdated: () => void;
-  ready: () => void;
-}
-
 export default class ReferenceList extends Plugin {
   settings: ReferenceListSettings;
-  emitter: Emitter<ViewEvents>;
+  emitter: Events;
   isReady: boolean = false;
   tooltipManager: TooltipManager;
+  ev: Events;
 
   get view() {
     const leaves = app.workspace.getLeavesOfType(viewType);
@@ -67,7 +60,7 @@ export default class ReferenceList extends Plugin {
 
   async onload() {
     await this.loadSettings();
-    this.emitter = createEmitter();
+    this.emitter = new Events();
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
     this.registerView(viewType, (leaf: WorkspaceLeaf) => {
@@ -83,7 +76,6 @@ export default class ReferenceList extends Plugin {
       this.initLeaf();
     });
 
-    this.register(this.initDelegatedEvents());
     this.registerEditorExtension([
       viewManagerField.init(() => this.view?.viewManager || null),
       citeKeyCacheField,
@@ -118,16 +110,14 @@ export default class ReferenceList extends Plugin {
         }
       }
 
-      this.isReady = true;
-
       // We don't want to attempt to execute pandoc until we've had a chance to fix PATH
-      if (this.emitter?.events.settingsUpdated?.length) {
-        this.emitter.emit('ready', undefined);
-      }
+      this.isReady = true;
+      this.emitter.trigger('ready');
     });
   }
 
   onunload() {
+    document.body.removeClass('pwc-tooltips');
     this.app.workspace
       .getLeavesOfType(viewType)
       .forEach((leaf) => leaf.detach());
@@ -143,36 +133,16 @@ export default class ReferenceList extends Plugin {
     });
   }
 
-  initDelegatedEvents() {
-    const singleRefListener = delegate('.csl-entry', 'click', (e: any) => {
-      if (e.delegateTarget) {
-        copyElToClipboard(e.delegateTarget);
-      }
-    });
-
-    const listListener = delegate('.pwc-copy-list', 'click', (e: any) => {
-      if (e.delegateTarget) {
-        const path = e.delegateTarget.dataset.source;
-        let bib = this.view?.viewManager.getReferenceListForSource(path);
-
-        if (bib) {
-          copyElToClipboard(bib);
-          bib = null;
-        }
-      }
-    });
-
-    return () => {
-      singleRefListener.destroy();
-      listListener.destroy();
-    };
-  }
-
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
   }
 
-  emitterDb = 0;
+  emitSettingsUpdate = debounce(
+    () => this.emitter.trigger('settingsUpdated'),
+    5000,
+    true
+  );
+
   async saveSettings() {
     document.body.toggleClass(
       'pwc-tooltips',
@@ -180,12 +150,7 @@ export default class ReferenceList extends Plugin {
     );
 
     // Refresh the reference list when settings change
-    clearTimeout(this.emitterDb);
-    this.emitterDb = window.setTimeout(() => {
-      if (this.emitter?.events.settingsUpdated?.length) {
-        this.emitter.emit('settingsUpdated', undefined);
-      }
-    }, 5000);
+    this.emitSettingsUpdate();
 
     await this.saveData(this.settings);
   }
