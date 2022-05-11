@@ -28,7 +28,7 @@ const citeMark = (
 
   if (isPrefix) cls.push('pandoc-citation-at');
   if (isResolved) cls.push('is-resolved');
-  if (isUnresolved) cls.push('is-missing');
+  if (isUnresolved) cls.push('is-unresolved');
 
   return Decoration.mark({
     class: cls.join(' '),

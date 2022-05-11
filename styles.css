@@ -208,10 +208,10 @@ body {
   text-decoration-color: var(--pwc-citation-underline-color);
 }
 
-.pwc-tooltips .pandoc-citation.is-missing {
+.pwc-tooltips .pandoc-citation.is-unresolved {
   text-decoration-color: var(--pwc-citation-underline-color-missing);
 }
 
-.pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-missing {
+.pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-unresolved {
   color: var(--pwc-citation-color-missing);
 }

@@ -11,7 +11,7 @@ function getCiteClass(
   const cls = ['pandoc-citation'];
   if (isPrefix) cls.push('pandoc-citation-at');
   if (isResolved) cls.push('is-resolved');
-  if (isUnresolved) cls.push('is-missing');
+  if (isUnresolved) cls.push('is-unresolved');
 
   return cls.join(' ');
 }
