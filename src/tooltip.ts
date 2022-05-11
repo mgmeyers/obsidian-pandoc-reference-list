@@ -1,4 +1,3 @@
-import delegate from 'delegate';
 import { TFile } from 'obsidian';
 
 import { t } from './lang/helpers';
@@ -8,41 +7,43 @@ export class TooltipManager {
   plugin: ReferenceList;
   tooltipDb = 0;
   tooltip: HTMLDivElement;
+  isScrollBound = false;
 
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
 
-    window.addEventListener('scroll', this.scrollHandler, {
-      capture: true,
-    });
     plugin.register(this.initDelegatedEvents());
-    plugin.register(this.destroy);
+    plugin.register(() => {
+      this.unbindScroll();
+      this.hideTooltip();
+    });
   }
 
   initDelegatedEvents() {
-    const over = delegate('.pandoc-citation', 'pointerover', (e: any) => {
+    const over = (e: PointerEvent) => {
       if (!this.plugin.settings.showCitekeyTooltips) return;
 
-      if (e.delegateTarget) {
-        const target = e.delegateTarget;
+      if (e.target instanceof HTMLElement) {
+        const target = e.target;
 
         clearTimeout(this.tooltipDb);
         this.tooltipDb = window.setTimeout(() => {
           this.showTooltip(target);
         }, this.plugin.settings.tooltipDelay);
       }
-    });
+    };
 
-    const out = delegate('.pandoc-citation', 'pointerout', (e: any) => {
+    const out = () => {
       if (!this.plugin.settings.showCitekeyTooltips) return;
-      if (e.delegateTarget) {
-        this.hideTooltip();
-      }
-    });
+      this.hideTooltip();
+    };
+
+    document.body.on('pointerover', '.pandoc-citation', over);
+    document.body.on('pointerout', '.pandoc-citation', out);
 
     return () => {
-      over.destroy();
-      out.destroy();
+      document.body.off('pointerover', '.pandoc-citation', over);
+      document.body.off('pointerout', '.pandoc-citation', out);
     };
   }
 
@@ -77,7 +78,7 @@ export class TooltipManager {
         }
 
         if (content) {
-          div.innerHTML = content;
+          div.append(content);
         } else {
           div.addClass('is-missing');
           div.createEl('em', {
@@ -100,23 +101,35 @@ export class TooltipManager {
         });
       }
     );
-  }
 
-  destroy = () => {
-    window.removeEventListener('scroll', this.scrollHandler, {
+    window.addEventListener('scroll', this.scrollHandler, {
       capture: true,
     });
-  };
+    this.isScrollBound = true;
+  }
+
+  unbindScroll() {
+    if (this.isScrollBound) {
+      window.removeEventListener('scroll', this.scrollHandler, {
+        capture: true,
+      });
+      this.isScrollBound = false;
+    }
+  }
 
   scrollHandler = () => {
-    if (this.tooltip) {
+    // Prevent dupe calls from quick scrolls
+    if (this.isScrollBound) {
       this.hideTooltip();
+      this.unbindScroll();
     }
   };
 
   hideTooltip() {
     clearTimeout(this.tooltipDb);
-    this.tooltip?.remove();
-    this.tooltip = null;
+    if (this.tooltip) {
+      this.tooltip?.remove();
+      this.tooltip = null;
+    }
   }
 }

@@ -210,6 +210,7 @@ body {
 
 .pwc-tooltips .pandoc-citation.is-unresolved {
   text-decoration-color: var(--pwc-citation-underline-color-missing);
+  opacity: 1;
 }
 
 .pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-unresolved {

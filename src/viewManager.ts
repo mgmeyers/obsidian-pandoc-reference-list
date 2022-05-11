@@ -74,7 +74,7 @@ export class ViewManager {
       return null;
     }
 
-    return html.outerHTML;
+    return html.cloneNode(true);
   }
 
   async getReferenceList(file: TFile, content: string) {

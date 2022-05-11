@@ -6,6 +6,7 @@ import {
   setIcon,
 } from 'obsidian';
 
+import { copyElToClipboard } from './helpers';
 import { t } from './lang/helpers';
 import ReferenceList from './main';
 import { ViewManager } from './viewManager';
@@ -77,7 +78,7 @@ export class ReferenceListView extends ItemView {
     }
   };
 
-  processReferences = () => {
+  processReferences = async () => {
     if (!this.plugin.settings.pathToPandoc) {
       return this.setMessage(
         t(
@@ -95,13 +96,16 @@ export class ReferenceListView extends ItemView {
     const activeView = app.workspace.getActiveViewOfType(MarkdownView);
 
     if (activeView) {
-      app.vault.cachedRead(activeView.file).then((content) => {
-        this.viewManager
-          .getReferenceList(activeView.file, content)
-          .then((bib) => {
-            this.setViewContent(activeView.file, bib);
-          });
-      });
+      try {
+        const fileContent = await app.vault.cachedRead(activeView.file);
+        const bib = await this.viewManager.getReferenceList(
+          activeView.file,
+          fileContent
+        );
+        this.setViewContent(activeView.file, bib);
+      } catch (e) {
+        console.error(e);
+      }
     } else {
       this.setNoContentMessage();
     }
@@ -117,7 +121,7 @@ export class ReferenceListView extends ItemView {
 
       bib.findAll('.csl-entry').forEach((e) => {
         e.setAttribute('aria-label', t('Click to copy'));
-        e.dataset.source = file.path;
+        e.onClickEvent(() => copyElToClipboard(e));
 
         const leafRoot = this.leaf.getRoot();
         if (leafRoot) {
@@ -134,15 +138,17 @@ export class ReferenceListView extends ItemView {
         },
         (div) => {
           div.createDiv({ text: this.getDisplayText() });
-          setIcon(
-            div.createDiv({
+          div.createDiv(
+            {
               cls: 'pwc-copy-list',
               attr: {
                 'aria-label': t('Copy list'),
-                'data-source': file.path,
               },
-            }),
-            'select-all-text'
+            },
+            (btn) => {
+              setIcon(btn, 'select-all-text');
+              btn.onClickEvent(() => copyElToClipboard(bib));
+            }
           );
         }
       );

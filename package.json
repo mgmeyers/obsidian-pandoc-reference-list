@@ -18,11 +18,11 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@codemirror/language": "^0.19.7",
-    "@codemirror/stream-parser": "https://github.com/lishid/stream-parser",
     "@babel/core": "^7.17.9",
     "@babel/preset-env": "^7.16.11",
     "@babel/preset-typescript": "^7.16.7",
+    "@codemirror/language": "^0.19.7",
+    "@codemirror/stream-parser": "https://github.com/lishid/stream-parser",
     "@types/jest": "27.4.1",
     "@types/lru-cache": "^7.6.1",
     "@types/node": "^16.11.6",
@@ -44,9 +44,7 @@
     "xml-js": "^1.6.11"
   },
   "dependencies": {
-    "delegate": "^3.2.0",
     "execa": "^6.1.0",
-    "fuse.js": "^6.5.3",
     "lru-cache": "^7.8.1",
     "shell-path": "^3.0.0",
     "which": "^2.0.2"
