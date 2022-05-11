@@ -4,8 +4,8 @@ import { shellPath } from 'shell-path';
 import which from 'which';
 
 import {
+  citeKeyCacheField,
   citeKeyPlugin,
-  resolvedCiteKeysField,
   viewManagerField,
 } from './editorExtension';
 import { Emitter, createEmitter } from './emitter';
@@ -86,7 +86,7 @@ export default class ReferenceList extends Plugin {
     this.register(this.initDelegatedEvents());
     this.registerEditorExtension([
       viewManagerField.init(() => this.view?.viewManager || null),
-      resolvedCiteKeysField,
+      citeKeyCacheField,
       citeKeyPlugin,
     ]);
     this.registerMarkdownPostProcessor(processCiteKeys(this));

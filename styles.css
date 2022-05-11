@@ -189,7 +189,7 @@ body {
   overflow: hidden;
 }
 
-:not(a, .cm-hmd-internal-link) > .pandoc-citation {
+:not(a, .cm-hmd-internal-link) > .pandoc-citation.is-resolved {
   color: var(--pwc-citation-color);
 }
 
@@ -201,7 +201,7 @@ body {
   color: var(--pwc-citation-extra-color);
 }
 
-.pwc-tooltips .pandoc-citation {
+.pwc-tooltips .pandoc-citation.is-resolved {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-thickness: 2px;

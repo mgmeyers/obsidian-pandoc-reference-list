@@ -13,7 +13,7 @@ import { Tree } from '@lezer/common';
 import { editorViewField } from 'obsidian';
 
 import { citeRegExp, multiCiteRegExp } from './regExps';
-import { ViewManager } from './viewManager';
+import { DocCache, ViewManager } from './viewManager';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -21,15 +21,14 @@ const citeMark = (
   citekey: string,
   sourceFile: string,
   isPrefix: boolean,
-  haveEntryForCiteKey: boolean
+  isResolved: boolean,
+  isUnresolved: boolean
 ) => {
   const cls = ['cm-pandoc-citation', 'pandoc-citation'];
 
   if (isPrefix) cls.push('pandoc-citation-at');
-
-  // TODO: need to figure this one out still, probably need to store available
-  //       references in editor state and send state updates from the viewManager
-  if (!haveEntryForCiteKey) cls.push('is-missing');
+  if (isResolved) cls.push('is-resolved');
+  if (isUnresolved) cls.push('is-missing');
 
   return Decoration.mark({
     class: cls.join(' '),
@@ -59,7 +58,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
         update.viewportChanged ||
         update.docChanged ||
         update.transactions.some((tr) =>
-          tr.effects.some((e) => e.is(setResolvedCiteKeys))
+          tr.effects.some((e) => e.is(setCiteKeyCache))
         )
       ) {
         this.decorations = this.mkDeco(update.view);
@@ -68,7 +67,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
     mkDeco(view: EditorView) {
       const b = new RangeSetBuilder<Decoration>();
       const obsView = view.state.field(editorViewField);
-      const resolvedKeys = view.state.field(resolvedCiteKeysField);
+      const citekeyCache = view.state.field(citeKeyCacheField);
 
       // Don't get the syntax tree until we have to
       let tree: Tree;
@@ -99,7 +98,10 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                   const multiCite = match[i];
                   let m2;
                   while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                    const haveEntryForCiteKey = resolvedKeys.has(m2[1]);
+                    const isUnresolved = citekeyCache?.unresolvedKeys.has(
+                      m2[1]
+                    );
+                    const isResolved = citekeyCache?.resolvedKeys.has(m2[1]);
 
                     b.add(
                       pos,
@@ -108,7 +110,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                         m2[1],
                         obsView.file.path,
                         true,
-                        haveEntryForCiteKey
+                        isResolved,
+                        isUnresolved
                       )
                     );
 
@@ -120,7 +123,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                         m2[1],
                         obsView.file.path,
                         false,
-                        haveEntryForCiteKey
+                        isResolved,
+                        isUnresolved
                       )
                     );
                     pos += m2[1].length;
@@ -134,7 +138,10 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                 continue;
               case 6:
                 if (match[i]) {
-                  const haveEntryForCiteKey = resolvedKeys.has(match[i]);
+                  const isUnresolved = citekeyCache?.unresolvedKeys.has(
+                    match[i]
+                  );
+                  const isResolved = citekeyCache?.resolvedKeys.has(match[i]);
 
                   b.add(
                     pos,
@@ -143,7 +150,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                       match[i],
                       obsView.file.path,
                       true,
-                      haveEntryForCiteKey
+                      isResolved,
+                      isUnresolved
                     )
                   );
 
@@ -155,7 +163,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                       match[i],
                       obsView.file.path,
                       false,
-                      haveEntryForCiteKey
+                      isResolved,
+                      isUnresolved
                     )
                   );
                   pos += match[i].length;
@@ -192,22 +201,21 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
   }
 );
 
-export const setResolvedCiteKeys = StateEffect.define<Set<string>>();
-
-export const resolvedCiteKeysField = StateField.define<Set<string>>({
+export const setCiteKeyCache = StateEffect.define<DocCache>();
+export const citeKeyCacheField = StateField.define<DocCache>({
   create(state) {
     const obsView = state.field(editorViewField);
     const viewManager = state.field(viewManagerField);
 
     if (viewManager?.cache.has(obsView.file)) {
-      return viewManager.cache.get(obsView.file).resolvedKeys;
+      return viewManager.cache.get(obsView.file);
     }
 
-    return new Set();
+    return null;
   },
   update(state, tr) {
     for (const e of tr.effects) {
-      if (e.is(setResolvedCiteKeys)) {
+      if (e.is(setCiteKeyCache)) {
         state = e.value;
       }
     }

@@ -3,10 +3,15 @@ import { MarkdownPostProcessorContext } from 'obsidian';
 import ReferenceList from './main';
 import { citeRegExp, multiCiteRegExp } from './regExps';
 
-function getCiteClass(isPrefix: boolean, haveEntryForCiteKey: boolean) {
+function getCiteClass(
+  isPrefix: boolean,
+  isResolved: boolean,
+  isUnresolved: boolean
+) {
   const cls = ['pandoc-citation'];
   if (isPrefix) cls.push('pandoc-citation-at');
-  if (!haveEntryForCiteKey) cls.push('is-missing');
+  if (isResolved) cls.push('is-resolved');
+  if (isUnresolved) cls.push('is-missing');
 
   return cls.join(' ');
 }
@@ -44,13 +49,14 @@ export function processCiteKeys(plugin: ReferenceList) {
                 const multiCite = match[i];
                 let m2;
                 while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                  const haveEntryForCiteKey =
-                    plugin.view?.viewManager.haveEntryForCiteKey(
+                  const { isResolved, isUnresolved } =
+                    plugin.view?.viewManager.getResolution(
                       ctx.sourcePath,
                       m2[1]
-                    );
+                    ) || { isResolved: false, isUnresolved: false };
+
                   frag.createSpan({
-                    cls: getCiteClass(true, haveEntryForCiteKey),
+                    cls: getCiteClass(true, isResolved, isUnresolved),
                     text: m2[1][0],
                     attr: {
                       'data-citekey': m2[1],
@@ -58,7 +64,7 @@ export function processCiteKeys(plugin: ReferenceList) {
                     },
                   });
                   frag.createSpan({
-                    cls: getCiteClass(false, haveEntryForCiteKey),
+                    cls: getCiteClass(false, isResolved, isUnresolved),
                     text: m2[1].slice(1),
                     attr: {
                       'data-citekey': m2[1],
@@ -79,13 +85,14 @@ export function processCiteKeys(plugin: ReferenceList) {
               continue;
             case 6:
               if (match[i]) {
-                const haveEntryForCiteKey =
-                  plugin.view?.viewManager.haveEntryForCiteKey(
+                const { isResolved, isUnresolved } =
+                  plugin.view?.viewManager.getResolution(
                     ctx.sourcePath,
                     match[i]
-                  );
+                  ) || { isResolved: false, isUnresolved: false };
+
                 frag.createSpan({
-                  cls: getCiteClass(true, haveEntryForCiteKey),
+                  cls: getCiteClass(true, isResolved, isUnresolved),
                   text: match[i][0],
                   attr: {
                     'data-citekey': match[i],
@@ -93,7 +100,7 @@ export function processCiteKeys(plugin: ReferenceList) {
                   },
                 });
                 frag.createSpan({
-                  cls: getCiteClass(false, haveEntryForCiteKey),
+                  cls: getCiteClass(false, isResolved, isUnresolved),
                   text: match[i].slice(1),
                   attr: {
                     'data-citekey': match[i],

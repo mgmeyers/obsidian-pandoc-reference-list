@@ -2,7 +2,7 @@ import { EditorView } from '@codemirror/view';
 import LRUCache from 'lru-cache';
 import { MarkdownView, TFile } from 'obsidian';
 
-import { setResolvedCiteKeys } from './editorExtension';
+import { setCiteKeyCache } from './editorExtension';
 import ReferenceList from './main';
 import {
   areSetsEqual,
@@ -12,9 +12,10 @@ import {
 } from './mdToReferenceList';
 import { ReferenceListSettings } from './settings';
 
-interface DocCache {
+export interface DocCache {
   keys: Set<string>;
   resolvedKeys: Set<string>;
+  unresolvedKeys: Set<string>;
   bib: HTMLElement;
   cslStyle?: string;
   pathToBibliography?: string;
@@ -105,9 +106,12 @@ export class ViewManager {
           )
         );
 
+        const resolvedKeys = this.getResolvedKeys(bib);
+
         const result = {
           keys: citeKeys,
-          resolvedKeys: this.getResolvedKeys(bib),
+          resolvedKeys,
+          unresolvedKeys: this.getUnresolvedKeys(citeKeys, resolvedKeys),
           bib: bib,
           cslStyle,
           pathToBibliography,
@@ -124,7 +128,7 @@ export class ViewManager {
 
             if (cm.dispatch) {
               cm.dispatch({
-                effects: [setResolvedCiteKeys.of(result.resolvedKeys)],
+                effects: [setCiteKeyCache.of(result)],
               });
             }
           }
@@ -144,10 +148,24 @@ export class ViewManager {
 
   getResolvedKeys(bib: HTMLElement) {
     return new Set(
-      bib
-        .findAll('.csl-entry')
-        .map((e) => e.getAttr('id').replace(/^ref-/, '@'))
+      new Set(
+        bib
+          .findAll('.csl-entry')
+          .map((e) => e.getAttr('id').replace(/^ref-/, '@'))
+      )
     );
+  }
+
+  getUnresolvedKeys(citekeys: Set<string>, resolved: Set<string>) {
+    const unresolved = new Set<string>();
+
+    citekeys.forEach((k) => {
+      if (!resolved.has(k)) {
+        unresolved.add(k);
+      }
+    });
+
+    return unresolved;
   }
 
   getReferenceListForSource(filePath: string) {
@@ -157,12 +175,19 @@ export class ViewManager {
     }
   }
 
-  haveEntryForCiteKey(filePath: string, key: string) {
+  getResolution(filePath: string, key: string) {
     const file = app.vault.getAbstractFileByPath(filePath);
     if (file && file instanceof TFile && this.cache.has(file)) {
-      return this.cache.get(file).resolvedKeys.has(key);
+      const cache = this.cache.get(file);
+      return {
+        isResolved: cache.resolvedKeys.has(key),
+        isUnresolved: cache.unresolvedKeys.has(key),
+      };
     }
 
-    return false;
+    return {
+      isResolved: false,
+      isUnresolved: false,
+    };
   }
 }
