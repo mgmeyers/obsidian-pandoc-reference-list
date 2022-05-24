@@ -189,6 +189,10 @@ body {
   overflow: hidden;
 }
 
+.cm-hmd-barelink {
+  text-decoration: none;
+}
+
 :not(a, .cm-hmd-internal-link) > .pandoc-citation.is-resolved {
   color: var(--pwc-citation-color);
 }
