@@ -95,16 +95,41 @@ export class ViewManager {
       cachedDoc.pathToBibliography !== pathToBibliography
     ) {
       try {
-        const bib = pandocHTMLToBibFragment(
-          await pandocMarkdownToHTML(
-            {
-              ...this.plugin.settings,
-              cslStyle,
-              pathToBibliography,
-            },
-            citeKeys
-          )
+        const htmlStr = await pandocMarkdownToHTML(
+          {
+            ...this.plugin.settings,
+            cslStyle,
+            pathToBibliography,
+          },
+          citeKeys
         );
+
+        const setNull = (): null => {
+          const resolvedKeys = new Set<string>();
+          const result = {
+            keys: citeKeys,
+            resolvedKeys,
+            unresolvedKeys: this.getUnresolvedKeys(citeKeys, resolvedKeys),
+            bib: null as HTMLElement,
+            cslStyle,
+            pathToBibliography,
+          };
+
+          this.cache.set(file, result);
+          this.dispatchResult(file, result);
+
+          return null;
+        };
+
+        if (!htmlStr) {
+          return setNull();
+        }
+
+        const bib = pandocHTMLToBibFragment(htmlStr);
+
+        if (!bib) {
+          return setNull();
+        }
 
         const resolvedKeys = this.getResolvedKeys(bib);
 
@@ -112,27 +137,13 @@ export class ViewManager {
           keys: citeKeys,
           resolvedKeys,
           unresolvedKeys: this.getUnresolvedKeys(citeKeys, resolvedKeys),
-          bib: bib,
+          bib,
           cslStyle,
           pathToBibliography,
         };
 
         this.cache.set(file, result);
-
-        app.workspace.getLeavesOfType('markdown').find((l) => {
-          const view = l.view as MarkdownView;
-          if (view.file === file) {
-            view.previewMode.rerender(true);
-
-            const cm = (view.editor as any).cm as EditorView;
-
-            if (cm.dispatch) {
-              cm.dispatch({
-                effects: [setCiteKeyCache.of(result)],
-              });
-            }
-          }
-        });
+        this.dispatchResult(file, result);
 
         return result.bib;
       } catch (e) {
@@ -144,6 +155,23 @@ export class ViewManager {
     }
 
     return cachedDoc.bib;
+  }
+
+  dispatchResult(file: TFile, result: DocCache) {
+    app.workspace.getLeavesOfType('markdown').find((l) => {
+      const view = l.view as MarkdownView;
+      if (view.file === file) {
+        view.previewMode.rerender(true);
+
+        const cm = (view.editor as any).cm as EditorView;
+
+        if (cm.dispatch) {
+          cm.dispatch({
+            effects: [setCiteKeyCache.of(result)],
+          });
+        }
+      }
+    });
   }
 
   getResolvedKeys(bib: HTMLElement) {
