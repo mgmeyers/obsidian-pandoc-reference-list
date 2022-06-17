@@ -1,7 +1,6 @@
 import { syntaxTree } from '@codemirror/language';
-import { RangeSetBuilder } from '@codemirror/rangeset';
-import { StateEffect, StateField } from '@codemirror/state';
-import { tokenClassNodeProp } from '@codemirror/stream-parser';
+import { tokenClassNodeProp } from '@codemirror/language';
+import { RangeSetBuilder, StateEffect, StateField } from '@codemirror/state';
 import {
   Decoration,
   DecorationSet,
