@@ -1,10 +1,4 @@
-import {
-  ItemView,
-  MarkdownView,
-  TFile,
-  WorkspaceLeaf,
-  setIcon,
-} from 'obsidian';
+import { ItemView, MarkdownView, WorkspaceLeaf, setIcon } from 'obsidian';
 
 import { copyElToClipboard } from './helpers';
 import { t } from './lang/helpers';
@@ -44,12 +38,16 @@ export class ReferenceListView extends ItemView {
 
     this.registerEvent(
       app.workspace.on('active-leaf-change', (leaf) => {
-        if (this.plugin.isReady) {
-          if (leaf && leaf.view instanceof MarkdownView) {
-            this.processReferences();
-          } else {
-            this.setNoContentMessage();
-          }
+        if (leaf && this.plugin.isReady) {
+          app.workspace.iterateRootLeaves((rootLeaf) => {
+            if (rootLeaf === leaf) {
+              if (leaf.view instanceof MarkdownView) {
+                this.processReferences();
+              } else {
+                this.setNoContentMessage();
+              }
+            }
+          });
         }
       })
     );
@@ -102,7 +100,7 @@ export class ReferenceListView extends ItemView {
           activeView.file,
           fileContent
         );
-        this.setViewContent(activeView.file, bib);
+        this.setViewContent(bib);
       } catch (e) {
         console.error(e);
       }
@@ -111,7 +109,7 @@ export class ReferenceListView extends ItemView {
     }
   };
 
-  setViewContent(file: TFile, bib: HTMLElement) {
+  setViewContent(bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
       if (this.plugin.settings.hideLinks) {
         bib.findAll('a').forEach((l) => {
