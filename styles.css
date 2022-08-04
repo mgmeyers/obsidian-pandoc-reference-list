@@ -220,3 +220,11 @@ body {
 .pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-unresolved {
   color: var(--pwc-citation-color-missing);
 }
+
+.pwc-success {
+  color: var(--interactive-success);
+}
+
+.pwc-error {
+  color: var(--text-error);
+}

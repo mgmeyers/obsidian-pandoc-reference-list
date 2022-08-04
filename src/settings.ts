@@ -3,6 +3,7 @@ import which from 'which';
 
 import { t } from './lang/helpers';
 import ReferenceList from './main';
+import { pandocMarkdownToHTML } from './mdToReferenceList';
 
 export interface ReferenceListSettings {
   pathToPandoc: string;
@@ -25,6 +26,34 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     const { containerEl } = this;
 
     containerEl.empty();
+
+    const validateSetting = new Setting(containerEl)
+      .setName(t('Validate Pandoc configuration'))
+      .addButton((b) => {
+        b.setButtonText(t('Validate')).onClick(() => {
+          pandocMarkdownToHTML(this.plugin.settings, new Set(['pdr-fake-key']))
+            .then(() => {
+              validateSetting.setDesc(
+                createFragment((f) =>
+                  f.createSpan({
+                    cls: 'pwc-success',
+                    text: t('Validation successful'),
+                  })
+                )
+              );
+            })
+            .catch((e) => {
+              validateSetting.setDesc(
+                createFragment((f) =>
+                  f.createSpan({
+                    cls: 'pwc-error',
+                    text: e.message,
+                  })
+                )
+              );
+            });
+        });
+      });
 
     new Setting(containerEl)
       .setName(t('Path to Bibliography File'))

@@ -41,9 +41,7 @@ export async function pandocMarkdownToHTML(
   }
 
   if (!settings.pathToBibliography) {
-    throw new Error(
-      'pandocMarkdownToHTML bibliography file is required'
-    );
+    throw new Error('pandocMarkdownToHTML bibliography file is required');
   }
 
   const args = [
@@ -80,18 +78,14 @@ export async function pandocMarkdownToHTML(
 
 export function pandocHTMLToBibFragment(html: string): HTMLElement {
   if (!html) {
-    throw new Error(
-      'pandocHTMLToBibFragment received empty HTML string'
-    );
+    throw new Error('pandocHTMLToBibFragment received empty HTML string');
   }
 
   let parsed = new DOMParser().parseFromString(html, 'text/html');
   const refs = parsed.getElementById('refs');
 
   if (!refs) {
-    throw new Error(
-      'pandocHTMLToBibFragment references container not found'
-    );
+    throw new Error('pandocHTMLToBibFragment references container not found');
   }
   parsed = null;
 

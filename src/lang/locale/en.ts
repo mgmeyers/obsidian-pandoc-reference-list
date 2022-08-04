@@ -31,6 +31,9 @@ export default {
   'Tooltip Delay': 'Tooltip Delay',
   'Set the amount of time (in milliseconds) to wait before displaying tooltips.':
     'Set the amount of time (in milliseconds) to wait before displaying tooltips.',
+  'Validate Pandoc configuration': 'Validate Pandoc configuration',
+  Validate: 'Validate',
+  'Validation successful': 'Validation successful',
 
   // src/view.ts
   'Please provide the path to pandoc in the Pandoc Reference List plugin settings.':
