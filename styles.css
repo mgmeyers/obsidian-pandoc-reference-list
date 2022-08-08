@@ -193,7 +193,7 @@ body {
   text-decoration: none;
 }
 
-:not(a, .cm-hmd-internal-link) > .pandoc-citation.is-resolved {
+:not(a, .cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation.is-resolved {
   color: var(--pwc-citation-color);
 }
 
@@ -201,23 +201,23 @@ body {
   color: var(--pwc-citation-formatting-color);
 }
 
-.cm-pandoc-citation-extra {
+:not(.cm-hmd-internal-link, .cm-link-alias) > .cm-pandoc-citation-extra {
   color: var(--pwc-citation-extra-color);
 }
 
-.pwc-tooltips .pandoc-citation.is-resolved {
+.pwc-tooltips :not(.cm-link-alias) > .pandoc-citation.is-resolved {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-thickness: 2px;
   text-decoration-color: var(--pwc-citation-underline-color);
 }
 
-.pwc-tooltips .pandoc-citation.is-unresolved {
+.pwc-tooltips :not(.cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation.is-unresolved {
   text-decoration-color: var(--pwc-citation-underline-color-missing);
   opacity: 1;
 }
 
-.pwc-tooltips :not(.cm-hmd-internal-link) > .pandoc-citation.is-unresolved {
+.pwc-tooltips :not(.cm-hmd-internal-link, .cm-link-alias) > .pandoc-citation.is-unresolved {
   color: var(--pwc-citation-color-missing);
 }
 
