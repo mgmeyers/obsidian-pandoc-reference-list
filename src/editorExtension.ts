@@ -98,7 +98,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                   let m2;
                   while ((m2 = multiCiteRegExp.exec(multiCite))) {
                     const isUnresolved =
-                      !nodeProps.includes('link') &&
+                      !nodeProps?.includes('link') &&
                       citekeyCache?.unresolvedKeys.has(m2[1]);
                     const isResolved = citekeyCache?.resolvedKeys.has(m2[1]);
 
