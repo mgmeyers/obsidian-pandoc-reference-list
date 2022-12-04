@@ -52,6 +52,8 @@ export class TooltipManager {
       this.hideTooltip();
     }
 
+    if (!el.dataset.source) return;
+
     const file = app.vault.getAbstractFileByPath(el.dataset.source);
     if (!file && !(file instanceof TFile)) {
       return;

@@ -18,7 +18,7 @@ const ignoreListRegEx = /code|math|templater|hashtag/;
 
 const citeMark = (
   citekey: string,
-  sourceFile: string,
+  sourceFile: string | undefined,
   isPrefix: boolean,
   isResolved: boolean,
   isUnresolved: boolean
@@ -33,7 +33,7 @@ const citeMark = (
     class: cls.join(' '),
     attributes: {
       'data-citekey': citekey,
-      'data-source': sourceFile,
+      'data-source': sourceFile || '',
     },
   });
 };
@@ -107,7 +107,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                       pos + 1,
                       citeMark(
                         m2[1],
-                        obsView.file.path,
+                        obsView?.file.path,
                         true,
                         isResolved,
                         isUnresolved
@@ -120,7 +120,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                       pos + 1 + withoutPrefix.length,
                       citeMark(
                         m2[1],
-                        obsView.file.path,
+                        obsView?.file.path,
                         false,
                         isResolved,
                         isUnresolved
@@ -147,7 +147,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                     pos + 1,
                     citeMark(
                       match[i],
-                      obsView.file.path,
+                      obsView?.file.path,
                       true,
                       isResolved,
                       isUnresolved
@@ -160,7 +160,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                     pos + 1 + withoutPrefix.length,
                     citeMark(
                       match[i],
-                      obsView.file.path,
+                      obsView?.file.path,
                       false,
                       isResolved,
                       isUnresolved
@@ -206,7 +206,7 @@ export const citeKeyCacheField = StateField.define<DocCache>({
     const obsView = state.field(editorViewField);
     const viewManager = state.field(viewManagerField);
 
-    if (viewManager?.cache.has(obsView.file)) {
+    if (obsView?.file && viewManager?.cache.has(obsView.file)) {
       return viewManager.cache.get(obsView.file);
     }
 

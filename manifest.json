@@ -1,7 +1,7 @@
 {
   "id": "obsidian-pandoc-reference-list",
   "name": "Pandoc Reference List",
-  "version": "1.2.10",
+  "version": "1.2.11",
   "minAppVersion": "0.15.0",
   "description": "Displays a formatted reference in the sidebar for each pandoc citekey present in the current document.",
   "author": "mgmeyers",
