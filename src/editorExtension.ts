@@ -9,23 +9,21 @@ import {
   ViewUpdate,
 } from '@codemirror/view';
 import { Tree } from '@lezer/common';
-import { editorViewField } from 'obsidian';
+import { editorInfoField } from 'obsidian';
 
-import { citeRegExp, multiCiteRegExp } from './regExps';
-import { DocCache, ViewManager } from './viewManager';
+import { SegmentType, getCitationSegments } from './parser/parser';
+import { BibManager, FileCache } from './bib/bibManager';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
 const citeMark = (
   citekey: string,
   sourceFile: string | undefined,
-  isPrefix: boolean,
   isResolved: boolean,
   isUnresolved: boolean
 ) => {
   const cls = ['cm-pandoc-citation', 'pandoc-citation'];
 
-  if (isPrefix) cls.push('pandoc-citation-at');
   if (isResolved) cls.push('is-resolved');
   if (isUnresolved) cls.push('is-unresolved');
 
@@ -38,13 +36,17 @@ const citeMark = (
   });
 };
 
-const citeMarkFormatting = Decoration.mark({
-  class: 'cm-pandoc-citation-formatting',
-});
+const citeMarkFormatting = (type: string) => {
+  return Decoration.mark({
+    class: `cm-pandoc-citation-formatting ${type}`,
+  });
+};
 
-const citeMarkExtra = Decoration.mark({
-  class: 'cm-pandoc-citation-extra',
-});
+const citeMarkExtra = (type: string) => {
+  return Decoration.mark({
+    class: `cm-pandoc-citation-extra ${type}`,
+  });
+};
 
 export const citeKeyPlugin = ViewPlugin.fromClass(
   class {
@@ -65,7 +67,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
     }
     mkDeco(view: EditorView) {
       const b = new RangeSetBuilder<Decoration>();
-      const obsView = view.state.field(editorViewField);
+      const obsView = view.state.field(editorInfoField);
       const citekeyCache = view.state.field(citeKeyCacheField);
 
       // Don't get the syntax tree until we have to
@@ -73,119 +75,55 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
       for (const { from, to } of view.visibleRanges) {
         const range = view.state.sliceDoc(from, to);
-        let match;
+        const segments = getCitationSegments(range);
 
-        while ((match = citeRegExp.exec(range))) {
-          let pos = from + match.index;
-
+        for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
 
-          const nodeProps = tree
-            .resolveInner(pos, 1)
-            .type.prop(tokenClassNodeProp);
+          for (const part of match) {
+            const start = from + part.from;
+            const end = from + part.to;
 
-          if (nodeProps && ignoreListRegEx.test(nodeProps)) {
-            continue;
-          }
+            const nodeProps = tree
+              .resolveInner(start, 1)
+              .type.prop(tokenClassNodeProp);
 
-          // Loop through the 10 possible groups
-          for (let i = 1; i <= 10; i++) {
-            switch (i) {
-              case 3:
-                // Break up multicite matches
-                if (match[i]) {
-                  const multiCite = match[i];
-                  let m2;
-                  while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                    const isUnresolved =
-                      !nodeProps?.includes('link') &&
-                      citekeyCache?.unresolvedKeys.has(m2[1]);
-                    const isResolved = citekeyCache?.resolvedKeys.has(m2[1]);
+            if (nodeProps && ignoreListRegEx.test(nodeProps)) {
+              break;
+            }
 
-                    b.add(
-                      pos,
-                      pos + 1,
-                      citeMark(
-                        m2[1],
-                        obsView?.file.path,
-                        true,
-                        isResolved,
-                        isUnresolved
-                      )
-                    );
+            switch (part.type) {
+              case SegmentType.key: {
+                const isUnresolved =
+                  !nodeProps?.includes('link') &&
+                  citekeyCache?.unresolvedKeys.has(part.val);
+                const isResolved = citekeyCache?.resolvedKeys.has(part.val);
 
-                    const withoutPrefix = m2[1].slice(1);
-                    b.add(
-                      pos + 1,
-                      pos + 1 + withoutPrefix.length,
-                      citeMark(
-                        m2[1],
-                        obsView?.file.path,
-                        false,
-                        isResolved,
-                        isUnresolved
-                      )
-                    );
-                    pos += m2[1].length;
-
-                    if (m2[2]) {
-                      b.add(pos, pos + m2[2].length, citeMarkFormatting);
-                      pos += m2[2].length;
-                    }
-                  }
-                }
+                b.add(
+                  start,
+                  end,
+                  citeMark(
+                    part.val,
+                    obsView?.file.path,
+                    isResolved,
+                    isUnresolved
+                  )
+                );
                 continue;
-              case 6:
-                if (match[i]) {
-                  const isUnresolved = citekeyCache?.unresolvedKeys.has(
-                    match[i]
-                  );
-                  const isResolved = citekeyCache?.resolvedKeys.has(match[i]);
-
-                  b.add(
-                    pos,
-                    pos + 1,
-                    citeMark(
-                      match[i],
-                      obsView?.file.path,
-                      true,
-                      isResolved,
-                      isUnresolved
-                    )
-                  );
-
-                  const withoutPrefix = match[i].slice(1);
-                  b.add(
-                    pos + 1,
-                    pos + 1 + withoutPrefix.length,
-                    citeMark(
-                      match[i],
-                      obsView?.file.path,
-                      false,
-                      isResolved,
-                      isUnresolved
-                    )
-                  );
-                  pos += match[i].length;
-                }
+              }
+              case SegmentType.at:
+              case SegmentType.curlyBracket:
+              case SegmentType.bracket:
+                b.add(start, end, citeMarkFormatting(part.type));
                 continue;
-              case 1:
-              case 5:
-              case 8:
-              case 10:
-                if (match[i]) {
-                  b.add(pos, pos + match[i].length, citeMarkFormatting);
-                  pos += match[i].length;
-                }
-                continue;
-              case 2:
-              case 4:
-              case 7:
-              case 9:
-                if (match[i]) {
-                  b.add(pos, pos + match[i].length, citeMarkExtra);
-                  pos += match[i].length;
-                }
+              case SegmentType.separator:
+              case SegmentType.suppressor:
+              case SegmentType.prefix:
+              case SegmentType.suffix:
+              case SegmentType.locator:
+              case SegmentType.locatorLabel:
+              case SegmentType.locatorSuffix:
+                b.add(start, end, citeMarkExtra(part.type));
                 continue;
             }
           }
@@ -200,14 +138,14 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
   }
 );
 
-export const setCiteKeyCache = StateEffect.define<DocCache>();
-export const citeKeyCacheField = StateField.define<DocCache>({
+export const setCiteKeyCache = StateEffect.define<FileCache>();
+export const citeKeyCacheField = StateField.define<FileCache>({
   create(state) {
-    const obsView = state.field(editorViewField);
-    const viewManager = state.field(viewManagerField);
+    const obsView = state.field(editorInfoField);
+    const bibManager = state.field(bibManagerField);
 
-    if (obsView?.file && viewManager?.cache.has(obsView.file)) {
-      return viewManager.cache.get(obsView.file);
+    if (obsView?.file && bibManager?.fileCache.has(obsView.file)) {
+      return bibManager.fileCache.get(obsView.file);
     }
 
     return null;
@@ -223,7 +161,7 @@ export const citeKeyCacheField = StateField.define<DocCache>({
   },
 });
 
-export const viewManagerField = StateField.define<ViewManager>({
+export const bibManagerField = StateField.define<BibManager>({
   create() {
     return null;
   },

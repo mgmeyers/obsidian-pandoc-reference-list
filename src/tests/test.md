@@ -1,1 +1,0 @@
-@cockellherrera2008 [p. 33] says hello. But so and so said blah blah [@marazzitietal2015; @howencryptpdf]. Jim-Bob [-@hoenig] did a thing.

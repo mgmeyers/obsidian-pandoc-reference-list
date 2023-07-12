@@ -2,6 +2,7 @@ import { TFile } from 'obsidian';
 
 import { t } from './lang/helpers';
 import ReferenceList from './main';
+import clip from 'text-clipper';
 
 export class TooltipManager {
   plugin: ReferenceList;
@@ -59,10 +60,29 @@ export class TooltipManager {
       return;
     }
 
-    const content = this.plugin.view?.viewManager.getBibForCiteKey(
-      file as TFile,
-      el.dataset.citekey
-    );
+    const keys = el.dataset.citekey.split('|');
+
+    let content: DocumentFragment = null;
+
+    for (const key of keys) {
+      const html = this.plugin.bibManager.getBibForCiteKey(
+        file as TFile,
+        key
+      ) as HTMLElement;
+
+      if (html) {
+        if (!content) content = createFragment();
+        if (keys.length > 1) {
+          const inner = html.innerHTML;
+          const clipped = clip(inner, 100, { html: true });
+          const clone = html.cloneNode() as HTMLElement;
+          clone.innerHTML = clipped;
+          content.append(clone);
+        } else {
+          content.append(html);
+        }
+      }
+    }
 
     const modClasses = this.plugin.settings.hideLinks ? ' collapsed-links' : '';
 

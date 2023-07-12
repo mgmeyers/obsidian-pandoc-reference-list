@@ -1,26 +1,32 @@
 import { MarkdownPostProcessorContext } from 'obsidian';
 
 import ReferenceList from './main';
-import { citeRegExp, multiCiteRegExp } from './regExps';
+import { Segment, SegmentType, getCitationSegments } from './parser/parser';
+import equal from 'fast-deep-equal';
 
-function getCiteClass(
-  isPrefix: boolean,
-  isResolved: boolean,
-  isUnresolved: boolean
-) {
+function getCiteClass(isResolved: boolean, isUnresolved: boolean) {
   const cls = ['pandoc-citation'];
-  if (isPrefix) cls.push('pandoc-citation-at');
   if (isResolved) cls.push('is-resolved');
   if (isUnresolved) cls.push('is-unresolved');
 
   return cls.join(' ');
 }
 
+function onlyValType(segs: Segment[]) {
+  return segs.map((s) => ({ type: s.type, val: s.val }));
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function processCiteKeys(plugin: ReferenceList) {
   return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-    const walker = document.createNodeIterator(el, NodeFilter.SHOW_TEXT);
+    const walker = activeDocument.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const toRemove: Node[] = [];
+    const sectionInfo = ctx.getSectionInfo(el);
+    const sectionCites = plugin.bibManager.getCitationsForSection(
+      ctx.sourcePath,
+      sectionInfo.lineStart,
+      sectionInfo.lineEnd
+    );
 
     let node;
     while ((node = walker.nextNode())) {
@@ -31,108 +37,74 @@ export function processCiteKeys(plugin: ReferenceList) {
       }
 
       let frag = createFragment();
-      let match;
       let pos = 0;
       let didMatch = false;
 
-      while ((match = citeRegExp.exec(content))) {
+      const segments = getCitationSegments(content);
+      for (const match of segments) {
         if (!didMatch) didMatch = true;
-        frag.appendText(content.substring(pos, match.index));
-        pos = match.index;
 
-        // Loop through the 10 possible groups
-        for (let i = 1; i <= 10; i++) {
-          switch (i) {
-            case 3:
-              // Break up multicite matches
-              if (match[i]) {
-                const multiCite = match[i];
-                let m2;
-                while ((m2 = multiCiteRegExp.exec(multiCite))) {
-                  const { isResolved, isUnresolved } =
-                    plugin.view?.viewManager.getResolution(
-                      ctx.sourcePath,
-                      m2[1]
-                    ) || { isResolved: false, isUnresolved: false };
+        const renderedCiteIndex = sectionCites.findIndex((c) =>
+          equal(onlyValType(c.data), onlyValType(match))
+        );
 
-                  frag.createSpan({
-                    cls: getCiteClass(true, isResolved, isUnresolved),
-                    text: m2[1][0],
-                    attr: {
-                      'data-citekey': m2[1],
-                      'data-source': ctx.sourcePath,
-                    },
-                  });
-                  frag.createSpan({
-                    cls: getCiteClass(false, isResolved, isUnresolved),
-                    text: m2[1].slice(1),
-                    attr: {
-                      'data-citekey': m2[1],
-                      'data-source': ctx.sourcePath,
-                    },
-                  });
-                  pos += m2[1].length;
+        if (renderedCiteIndex >= 0) {
+          const renderedCite = sectionCites[renderedCiteIndex];
+          const preCite = content.substring(pos, match[0].from);
 
-                  if (m2[2]) {
-                    frag.createSpan({
-                      cls: 'pandoc-citation-formatting',
-                      text: m2[2],
-                    });
-                    pos += m2[2].length;
-                  }
-                }
-              }
+          const attr = {
+            'data-citekey': renderedCite.citations.map((c) => c.id).join('|'),
+            'data-source': ctx.sourcePath,
+          };
+
+          pos = match[match.length - 1].to;
+
+          frag.appendText(preCite);
+          frag.createSpan({
+            cls: 'pandoc-citation is-resolved',
+            text: renderedCite.val,
+            attr: attr,
+          });
+
+          continue;
+        }
+
+        for (const part of match) {
+          frag.appendText(content.substring(pos, part.from));
+          pos = part.to;
+
+          switch (part.type) {
+            case SegmentType.key: {
+              const { isResolved, isUnresolved } =
+                plugin.bibManager.getResolution(ctx.sourcePath, part.val) || {
+                  isResolved: false,
+                  isUnresolved: false,
+                };
+
+              frag.createSpan({
+                cls: getCiteClass(isResolved, isUnresolved),
+                text: part.val,
+                attr: {
+                  'data-citekey': part.val,
+                  'data-source': ctx.sourcePath,
+                },
+              });
               continue;
-            case 6:
-              if (match[i]) {
-                const { isResolved, isUnresolved } =
-                  plugin.view?.viewManager.getResolution(
-                    ctx.sourcePath,
-                    match[i]
-                  ) || { isResolved: false, isUnresolved: false };
-
-                frag.createSpan({
-                  cls: getCiteClass(true, isResolved, isUnresolved),
-                  text: match[i][0],
-                  attr: {
-                    'data-citekey': match[i],
-                    'data-source': ctx.sourcePath,
-                  },
-                });
-                frag.createSpan({
-                  cls: getCiteClass(false, isResolved, isUnresolved),
-                  text: match[i].slice(1),
-                  attr: {
-                    'data-citekey': match[i],
-                    'data-source': ctx.sourcePath,
-                  },
-                });
-                pos += match[i].length;
-              }
-              continue;
-            case 1:
-            case 5:
-            case 8:
-            case 10:
-              if (match[i]) {
-                frag.createSpan({
-                  cls: 'pandoc-citation-formatting',
-                  text: match[i],
-                });
-                pos += match[i].length;
-              }
-              continue;
-            case 2:
-            case 4:
-            case 7:
-            case 9:
-              if (match[i]) {
-                frag.createSpan({
-                  cls: 'pandoc-citation-extra',
-                  text: match[i],
-                });
-                pos += match[i].length;
-              }
+            }
+            case SegmentType.at:
+            case SegmentType.curlyBracket:
+            case SegmentType.bracket:
+            case SegmentType.separator:
+            case SegmentType.suppressor:
+            case SegmentType.prefix:
+            case SegmentType.suffix:
+            case SegmentType.locator:
+            case SegmentType.locatorLabel:
+            case SegmentType.locatorSuffix:
+              frag.createSpan({
+                cls: `pandoc-citation-formatting ${part.type}`,
+                text: part.val,
+              });
               continue;
           }
         }
@@ -140,7 +112,7 @@ export function processCiteKeys(plugin: ReferenceList) {
 
       if (didMatch) {
         // Add trailing text
-        frag.appendText(content.substring(frag.textContent.length));
+        frag.appendText(content.substring(pos));
         toRemove.push(node);
         node.parentNode.insertBefore(frag, node);
         frag = null;
