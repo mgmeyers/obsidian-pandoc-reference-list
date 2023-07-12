@@ -207,11 +207,13 @@ body {
 
 .pwc-tooltips
   :not(a, .cm-hmd-internal-link, .cm-link-alias)
-  > .pandoc-citation.is-resolved {
+  > :is(.pandoc-citation, .at).is-resolved {
   color: var(--pwc-citation-color);
 }
 
-.pwc-tooltips :not(.cm-formatting-link) > .cm-pandoc-citation-formatting {
+.pwc-tooltips
+  :not(.cm-formatting-link)
+  > .cm-pandoc-citation-formatting:not(.at) {
   color: var(--pwc-citation-formatting-color);
 }
 
@@ -221,7 +223,7 @@ body {
   color: var(--pwc-citation-extra-color);
 }
 
-.pwc-tooltips :not(.cm-link-alias) > .pandoc-citation.is-resolved {
+.pwc-tooltips :not(.cm-link-alias) > :is(.pandoc-citation, .at).is-resolved {
   text-decoration: underline;
   text-decoration-style: dotted;
   text-decoration-thickness: 2px;
@@ -230,14 +232,14 @@ body {
 
 .pwc-tooltips
   :not(.cm-hmd-internal-link, .cm-link-alias)
-  > .pandoc-citation.is-unresolved {
+  > :is(.pandoc-citation, .at).is-unresolved {
   text-decoration-color: var(--pwc-citation-underline-color-missing);
   opacity: 1;
 }
 
 .pwc-tooltips
   :not(.cm-hmd-internal-link, .cm-link-alias)
-  > .pandoc-citation.is-unresolved {
+  > :is(.pandoc-citation, .at).is-unresolved {
   color: var(--pwc-citation-color-missing);
 }
 

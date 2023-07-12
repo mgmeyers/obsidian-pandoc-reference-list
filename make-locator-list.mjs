@@ -65,8 +65,6 @@ readFiles(
       const lang = locale.attributes['xml:lang'];
       const langTerms = (locatorToTerm[lang] = {});
 
-      console.log(content);
-
       if (locale) {
         const terms = locale.elements.find((el) => el.name === 'terms');
 

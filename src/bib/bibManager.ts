@@ -404,10 +404,6 @@ export class BibManager {
       settings?.style === cachedDoc?.settings?.style &&
       settings?.lang === cachedDoc?.settings?.lang;
 
-    if (cachedDoc && equal(cachedDoc.keys, citeKeys) && areSettingsEqual) {
-      return cachedDoc.bib;
-    }
-
     const source =
       cachedDoc?.source && areSettingsEqual
         ? cachedDoc.source
@@ -459,6 +455,15 @@ export class BibManager {
     // source.engine.updateItems(Array.from(resolvedKeys));
 
     const citations = cite(source.engine, filtered);
+
+    if (
+      cachedDoc &&
+      equal(cachedDoc.citations, citations) &&
+      areSettingsEqual
+    ) {
+      return cachedDoc.bib;
+    }
+
     const bib = source.engine.makeBibliography();
 
     if (!bib?.length) {
@@ -518,7 +523,6 @@ export class BibManager {
         }
 
         const cm = (view.editor as any).cm as EditorView;
-
         if (cm.dispatch) {
           cm.dispatch({
             effects: [setCiteKeyCache.of(result)],

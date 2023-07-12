@@ -325,7 +325,7 @@ export default class ReferenceList extends Plugin {
 
         if (
           !bib &&
-          cache.source === this.bibManager &&
+          cache?.source === this.bibManager &&
           settings.pullFromZotero &&
           !(await isZoteroRunning(settings.zoteroPort)) &&
           this.bibManager.fileCache.get(activeView.file)?.keys.size

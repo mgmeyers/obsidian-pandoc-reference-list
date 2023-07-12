@@ -7,12 +7,23 @@ import {
   EditorView,
   ViewPlugin,
   ViewUpdate,
+  WidgetType,
 } from '@codemirror/view';
 import { Tree } from '@lezer/common';
-import { editorInfoField } from 'obsidian';
+import {
+  editorInfoField,
+  editorLivePreviewField,
+  livePreviewState,
+} from 'obsidian';
 
-import { SegmentType, getCitationSegments } from './parser/parser';
+import {
+  RenderedCitation,
+  Segment,
+  SegmentType,
+  getCitationSegments,
+} from './parser/parser';
 import { BibManager, FileCache } from './bib/bibManager';
+import equal from 'fast-deep-equal';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -48,6 +59,59 @@ const citeMarkExtra = (type: string) => {
   });
 };
 
+class CiteWidget extends WidgetType {
+  cite: RenderedCitation;
+  sourcePath?: string;
+
+  constructor(cite: RenderedCitation, sourcePath?: string) {
+    super();
+    this.cite = cite;
+    this.sourcePath = sourcePath;
+  }
+
+  eq(widget: this): boolean {
+    return this.cite === widget.cite;
+  }
+
+  toDOM() {
+    const attr = {
+      'data-citekey': this.cite.citations.map((c) => c.id).join('|'),
+      'data-source': this.sourcePath,
+    };
+
+    return createSpan(
+      {
+        cls: 'pandoc-citation is-resolved',
+        attr: attr,
+      },
+      (span) => {
+        if (/</.test(this.cite.val)) {
+          const parsed = new DOMParser().parseFromString(
+            this.cite.val,
+            'text/html'
+          );
+          span.append(parsed.body.firstChild);
+        } else {
+          span.setText(this.cite.val);
+        }
+      }
+    );
+  }
+
+  ignoreEvent(): boolean {
+    return false;
+  }
+}
+
+const citeDeco = (cite: RenderedCitation, sourcePath?: string) =>
+  Decoration.replace({
+    widget: new CiteWidget(cite, sourcePath),
+  });
+
+function onlyValType(segs: Segment[]) {
+  return segs.map((s) => ({ type: s.type, val: s.val }));
+}
+
 export const citeKeyPlugin = ViewPlugin.fromClass(
   class {
     decorations: DecorationSet;
@@ -59,8 +123,14 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
         update.viewportChanged ||
         update.docChanged ||
         update.transactions.some((tr) =>
-          tr.effects.some((e) => e.is(setCiteKeyCache))
-        )
+          tr.effects.some(
+            (e) =>
+              e.is(setCiteKeyCache) || e.value?.field === editorLivePreviewField
+          )
+        ) ||
+        (update.view.state.field(editorLivePreviewField) &&
+          update.selectionSet &&
+          !update.view.plugin(livePreviewState)?.mousedown)
       ) {
         this.decorations = this.mkDeco(update.view);
       }
@@ -69,6 +139,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
       const b = new RangeSetBuilder<Decoration>();
       const obsView = view.state.field(editorInfoField);
       const citekeyCache = view.state.field(citeKeyCacheField);
+      const isLivePreview = view.state.field(editorLivePreviewField);
 
       // Don't get the syntax tree until we have to
       let tree: Tree;
@@ -80,7 +151,34 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
 
-          for (const part of match) {
+          if (isLivePreview) {
+            const rendered = citekeyCache?.citations.find((c) =>
+              equal(onlyValType(c?.data || []), onlyValType(match))
+            );
+
+            if (rendered) {
+              const start = match[0].from;
+              const end = match[match.length - 1].to;
+              if (
+                view.state.selection.ranges.every((r) => {
+                  return (
+                    !(start >= r.from && end <= r.to) &&
+                    !(
+                      (r.from >= start && r.from <= end) ||
+                      (r.to >= start && r.to <= end)
+                    )
+                  );
+                })
+              ) {
+                b.add(start, end, citeDeco(rendered, obsView?.file.path));
+                continue;
+              }
+            }
+          }
+
+          for (let i = 0, len = match.length; i < len; i++) {
+            const part = match[i];
+            const next = match[i + 1];
             const start = from + part.from;
             const end = from + part.to;
 
@@ -111,7 +209,22 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                 );
                 continue;
               }
-              case SegmentType.at:
+              case SegmentType.at: {
+                const isUnresolved =
+                  !!next &&
+                  !nodeProps?.includes('link') &&
+                  citekeyCache?.unresolvedKeys.has(next.val);
+                const isResolved =
+                  !!next && citekeyCache?.resolvedKeys.has(next.val);
+
+                const classes: string[] = [part.type];
+
+                if (isUnresolved) classes.push('is-unresolved');
+                if (isResolved) classes.push('is-resolved');
+
+                b.add(start, end, citeMarkFormatting(classes.join(' ')));
+                continue;
+              }
               case SegmentType.curlyBracket:
               case SegmentType.bracket:
                 b.add(start, end, citeMarkFormatting(part.type));

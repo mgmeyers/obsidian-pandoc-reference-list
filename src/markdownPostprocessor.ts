@@ -69,7 +69,9 @@ export function processCiteKeys(plugin: ReferenceList) {
           continue;
         }
 
-        for (const part of match) {
+        for (let i = 0, len = match.length; i < len; i++) {
+          const part = match[i];
+          const next = match[i + 1];
           frag.appendText(content.substring(pos, part.from));
           pos = part.to;
 
@@ -91,7 +93,24 @@ export function processCiteKeys(plugin: ReferenceList) {
               });
               continue;
             }
-            case SegmentType.at:
+            case SegmentType.at: {
+              const { isResolved, isUnresolved } =
+                plugin.bibManager.getResolution(ctx.sourcePath, next?.val) || {
+                  isResolved: false,
+                  isUnresolved: false,
+                };
+
+              const classes: string[] = [part.type];
+
+              if (isUnresolved) classes.push('is-unresolved');
+              if (isResolved) classes.push('is-resolved');
+
+              frag.createSpan({
+                cls: `pandoc-citation-formatting ${classes.join(' ')}`,
+                text: part.val,
+              });
+              continue;
+            }
             case SegmentType.curlyBracket:
             case SegmentType.bracket:
             case SegmentType.separator:

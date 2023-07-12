@@ -86,14 +86,10 @@ export class TooltipManager {
 
     const modClasses = this.plugin.settings.hideLinks ? ' collapsed-links' : '';
 
-    this.tooltip = document.body.createDiv(
+    this.tooltip = activeDocument.body.createDiv(
       { cls: `pwc-tooltip${modClasses}` },
       (div) => {
-        // @'s are wrapped on their own, but that's where we want to show the tooltip
-        const prev = el.previousElementSibling;
-        const rect = prev?.hasClass('pandoc-citation')
-          ? prev.getBoundingClientRect()
-          : el.getBoundingClientRect();
+        const rect = el.getBoundingClientRect();
 
         if (this.plugin.settings.hideLinks) {
           div.addClass('collapsed-links');
