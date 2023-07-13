@@ -301,7 +301,8 @@ export class BibManager {
         },
       },
       styleCache.get(style),
-      lang
+      lang,
+      true
     );
     engine.opt.development_extensions.wrap_url_and_doi = true;
     return engine;

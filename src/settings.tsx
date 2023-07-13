@@ -163,7 +163,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
           loadOptions={loadCSLOptions}
           isClearable
           onChange={(selection: any) => {
-            this.plugin.settings.cslStyleURL = selection.value;
+            this.plugin.settings.cslStyleURL = selection?.value;
             this.plugin.saveSettings(() =>
               this.plugin.bibManager.reinit(false)
             );
