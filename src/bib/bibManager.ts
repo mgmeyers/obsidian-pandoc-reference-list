@@ -103,17 +103,18 @@ export class BibManager {
     this.plugin = null;
   }
 
-  reinit(clearCache: boolean) {
+  async reinit(clearCache: boolean) {
     this.initPromise = new PromiseCapability();
     this.fileCache.clear();
+    if (clearCache) this.bibCache.clear();
 
     if (this.plugin.settings.pullFromZotero) {
-      if (clearCache) this.bibCache.clear();
-      this.loadGlobalZBib(true);
+      await this.loadGlobalZBib(true);
     } else {
-      if (clearCache) this.bibCache.clear();
-      this.loadGlobalBibFile(true);
+      await this.loadGlobalBibFile(true);
     }
+
+    this.initPromise.resolve();
   }
 
   setFuse(data: PartialCSLEntry[] = []) {
@@ -230,7 +231,6 @@ export class BibManager {
       this.styleCache,
       this.bibCache
     );
-    this.initPromise.resolve();
   }
 
   async loadGlobalZBib(fromCache?: boolean) {
@@ -245,12 +245,10 @@ export class BibManager {
           if (list?.length) {
             bib.push(...list);
           } else {
-            this.initPromise.resolve();
             return;
           }
         } catch (e) {
           console.error('Error fetching bibliography from Zotero', e);
-          this.initPromise.resolve();
           return;
         }
       }
@@ -281,7 +279,6 @@ export class BibManager {
       this.styleCache,
       this.bibCache
     );
-    this.initPromise.resolve();
   }
 
   buildEngine(
@@ -376,7 +373,7 @@ export class BibManager {
 
   async getReferenceList(file: TFile, content: string) {
     await this.plugin.initPromise.promise;
-    await this.plugin.bibManager.initPromise.promise;
+    await this.initPromise.promise;
 
     const segs = getCitationSegments(content);
     const processed = segs.map((s) => getCitations(s));

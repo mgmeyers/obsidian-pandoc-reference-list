@@ -51,13 +51,15 @@ export default class ReferenceList extends Plugin {
     this.emitter = new Events();
     this.bibManager = new BibManager(this);
     this.initPromise = new PromiseCapability();
-    this.initPromise.promise.then(() => {
-      if (this.settings.pullFromZotero) {
-        this.bibManager.loadGlobalZBib();
-      } else {
-        this.bibManager.loadGlobalBibFile();
-      }
-    });
+    this.initPromise.promise
+      .then(() => {
+        if (this.settings.pullFromZotero) {
+          return this.bibManager.loadGlobalZBib();
+        } else {
+          return this.bibManager.loadGlobalBibFile();
+        }
+      })
+      .finally(() => this.bibManager.initPromise.resolve());
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
     this.registerEditorSuggest(new CiteSuggest(app, this));

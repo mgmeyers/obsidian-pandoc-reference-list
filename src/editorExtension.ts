@@ -157,8 +157,9 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
             );
 
             if (rendered) {
-              const start = match[0].from;
-              const end = match[match.length - 1].to;
+              const start = from + match[0].from;
+              const end = from + match[match.length - 1].to;
+
               if (
                 view.state.selection.ranges.every((r) => {
                   return (

@@ -22,6 +22,9 @@ export function processCiteKeys(plugin: ReferenceList) {
     const walker = activeDocument.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const toRemove: Node[] = [];
     const sectionInfo = ctx.getSectionInfo(el);
+
+    if (!sectionInfo) return;
+
     const sectionCites = plugin.bibManager.getCitationsForSection(
       ctx.sourcePath,
       sectionInfo.lineStart,
