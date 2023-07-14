@@ -197,7 +197,7 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
               if (
                 centerNode.type
                   .prop(tokenClassNodeProp)
-                  .includes('hmd-internal-link')
+                  ?.includes('hmd-internal-link')
               ) {
                 linkText = view.state.sliceDoc(centerNode.from, centerNode.to);
               }

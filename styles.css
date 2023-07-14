@@ -107,10 +107,15 @@ body {
   color: var(--text-muted);
 }
 
+.csl-entry-wrapper {
+  display: flex;
+  padding: 1em 5px;
+  gap: var(--size-4-2);
+}
+
 .csl-entry {
   font-size: var(--pwc-font-size);
   word-wrap: break-word;
-  padding: 1em 5px;
   cursor: pointer;
   gap: var(--size-4-2);
 }
@@ -119,7 +124,7 @@ body {
   display: flex;
 }
 
-.pwc-reference-list .csl-entry:not(:last-child) {
+.pwc-reference-list .csl-entry-wrapper:not(:last-child) {
   border-bottom: 1px solid var(--background-modifier-border);
 }
 

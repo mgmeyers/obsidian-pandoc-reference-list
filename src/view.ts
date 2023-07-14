@@ -24,16 +24,7 @@ export class ReferenceListView extends ItemView {
 
   setViewContent(bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
-      if (this.plugin.settings.hideLinks) {
-        bib.findAll('a').forEach((l) => {
-          l.setAttribute('aria-label', l.innerText);
-        });
-      }
-
       bib.findAll('.csl-entry').forEach((e) => {
-        e.setAttribute('aria-label', t('Click to copy'));
-        e.onClickEvent(() => copyElToClipboard(e));
-
         const leafRoot = this.leaf.getRoot();
         if (leafRoot) {
           const tooltipPos =

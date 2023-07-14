@@ -4,17 +4,18 @@ import ReferenceList from 'src/main';
 import { PartialCSLEntry } from './types';
 import Fuse from 'fuse.js';
 import { bibToCSL, getCSLLocale, getCSLStyle, getZBib } from './helpers';
-import { PromiseCapability } from 'src/helpers';
+import { PromiseCapability, copyElToClipboard } from 'src/helpers';
 import {
   RenderedCitation,
   getCitationSegments,
   getCitations,
 } from 'src/parser/parser';
 import LRUCache from 'lru-cache';
-import { MarkdownView, TFile } from 'obsidian';
+import { Keymap, MarkdownView, TFile, setIcon } from 'obsidian';
 import { cite } from 'src/parser/citeproc';
 import { setCiteKeyCache } from 'src/editorExtension';
 import equal from 'fast-deep-equal';
+import { t } from 'src/lang/helpers';
 
 const fuseSettings = {
   includeMatches: true,
@@ -540,6 +541,7 @@ export class BibManager {
     const htmlStr = [metadata.bibstart];
 
     metadata.entry_ids?.forEach((e: string, i: number) => {
+      entries[i] = entries[i].replace(/>/, ` data-citekey="${e[0]}">`);
       citeBibMap.set(e[0], entries[i]);
     });
 
@@ -550,6 +552,47 @@ export class BibManager {
       ? (new DOMParser().parseFromString(htmlStr.join(''), 'text/html').body
           .firstChild as HTMLElement)
       : null;
+
+    if (this.plugin.settings.hideLinks) {
+      parsed.findAll('a').forEach((l) => {
+        l.setAttribute('aria-label', l.innerText);
+      });
+    }
+
+    parsed.findAll('.csl-entry').forEach((e) => {
+      e.setAttribute('aria-label', t('Click to copy'));
+      e.onClickEvent(() => copyElToClipboard(e));
+      const div = createDiv({ cls: 'csl-entry-wrapper' });
+      e.parentElement.insertBefore(div, e);
+      div.append(e);
+
+      if (e.dataset.citekey) {
+        let linkText = '@' + e.dataset.citekey;
+        let linkDest = app.metadataCache.getFirstLinkpathDest(
+          linkText,
+          file.path
+        );
+        if (!linkDest) {
+          linkText = e.dataset.citekey;
+          linkDest = app.metadataCache.getFirstLinkpathDest(
+            linkText,
+            file.path
+          );
+        }
+        if (!linkDest) return;
+
+        div.createDiv({}, (div) =>
+          div.createDiv('clickable-icon', (div) => {
+            setIcon(div, 'lucide-sticky-note');
+            div.setAttr('aria-label', t('Open literature note'));
+            div.onClickEvent((e) => {
+              const newPane = Keymap.isModEvent(e);
+              app.workspace.openLinkText(linkText, file.path, newPane);
+            });
+          })
+        );
+      }
+    });
 
     const result: FileCache = {
       keys: citeKeys,

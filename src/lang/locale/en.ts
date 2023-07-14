@@ -66,4 +66,7 @@ export default {
 
   // src/main.ts
   'Open view': 'Open view',
+
+  // src/view.ts
+  'Open literature note': 'Open literature note',
 };
