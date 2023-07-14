@@ -259,6 +259,8 @@ export interface CitationGroup {
 
 export interface RenderedCitation extends CitationGroup {
   val: string;
+  noteIndex?: number;
+  note?: string;
 }
 
 export function getCitations(
@@ -320,17 +322,6 @@ export function getCitations(
         }
         suppressAuthor = true;
         continue;
-      // case SegmentType.bracket:
-      //   if (seg.val === '[' && composite) {
-      //     suffix = undefined;
-      //     locator = undefined;
-      //     label = undefined;
-      //     composite = false;
-      //     onlyAuthor = false;
-      //     push();
-      //     suppressAuthor = true;
-      //   }
-      //   continue;
       case SegmentType.separator:
         push();
         prefix = undefined;
@@ -421,6 +412,7 @@ export function getCitationSegments(str: string) {
     const next = str[i + 1];
 
     if (c === '[') {
+      if (next === '[' && !state) continue;
       if (state) state.bracketDepth++;
       if (!state || state.bracketDepth === 1) {
         if (state?.seekingSuffix) {

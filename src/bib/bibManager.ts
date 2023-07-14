@@ -19,6 +19,7 @@ import equal from 'fast-deep-equal';
 const fuseSettings = {
   includeMatches: true,
   threshold: 0.35,
+  minMatchCharLength: 2,
   keys: [
     { name: 'id', weight: 0.7 },
     { name: 'title', weight: 0.3 },
@@ -73,6 +74,42 @@ function getScopedSettings(file: TFile): ScopedSettings {
   }
 
   return output;
+}
+
+function extractRawLocales(style: string, localeName?: string) {
+  const locales = ['en-US'];
+  if (localeName) {
+    locales.push(localeName);
+  }
+  if (style) {
+    const matches = style.match(/locale="[^"]+"/g);
+    if (matches) {
+      for (const match of matches) {
+        const vals = match.slice(0, -1).slice(8).split(/\s+/);
+        for (const val of vals) {
+          locales.push(val);
+        }
+      }
+    }
+  }
+  return normalizeLocales(locales);
+}
+
+function normalizeLocales(locales: string[]) {
+  const obj: Record<string, boolean> = {};
+  for (let locale of locales) {
+    locale = locale.split('-').slice(0, 2).join('-');
+    if (CSL.LANGS[locale]) {
+      obj[locale] = true;
+    } else {
+      locale = locale.split('-')[0];
+      if (CSL.LANG_BASES[locale]) {
+        locale = CSL.LANG_BASES[locale].split('_').join('-');
+        obj[locale] = true;
+      }
+    }
+  }
+  return Object.keys(obj);
 }
 
 export class BibManager {
@@ -135,16 +172,7 @@ export class BibManager {
     let lang = pluginSettings.cslLang ?? 'en-US';
     let bibCache = this.bibCache;
     let fuse = this.fuse;
-
-    if (settings.lang) {
-      try {
-        await this.loadLangs([settings.lang]);
-        lang = settings.lang;
-      } catch (e) {
-        console.error(e);
-        return this;
-      }
-    }
+    let langs = [settings.lang];
 
     if (settings.style) {
       try {
@@ -152,8 +180,21 @@ export class BibManager {
         const styleObj = isURL
           ? { id: settings.style }
           : { id: settings.style, explicitPath: settings.style };
-        await this.loadStyles([styleObj]);
+        const styles = await this.loadStyles([styleObj]);
+        for (const styleStr of styles) {
+          langs = extractRawLocales(styleStr, settings.lang);
+        }
         style = settings.style;
+      } catch (e) {
+        console.error(e);
+        return this;
+      }
+    }
+
+    if (settings.lang) {
+      try {
+        await this.loadLangs(langs);
+        lang = settings.lang;
       } catch (e) {
         console.error(e);
         return this;
@@ -298,8 +339,7 @@ export class BibManager {
         },
       },
       styleCache.get(style),
-      lang,
-      true
+      lang
     );
     engine.opt.development_extensions.wrap_url_and_doi = true;
     return engine;
@@ -309,23 +349,28 @@ export class BibManager {
     lang: string,
     style: { id: string; explicitPath?: string }
   ) {
-    if (!this.langCache.has(lang)) {
-      try {
-        await this.loadLangs([lang]);
-      } catch (e) {
-        console.error('Error loading lang', lang, e);
-        this.initPromise.resolve();
-        return;
-      }
-    }
+    let styles: string[] = [];
     if (!this.styleCache.has(style.id)) {
       try {
-        await this.loadStyles([style]);
+        styles = await this.loadStyles([style]);
       } catch (e) {
         console.error('Error loading style', style, e);
         this.initPromise.resolve();
         return;
       }
+    }
+
+    let locales = [lang];
+    for (const styleStr of styles) {
+      locales = extractRawLocales(styleStr, lang);
+    }
+
+    try {
+      await this.loadLangs(locales);
+    } catch (e) {
+      console.error('Error loading lang', lang, e);
+      this.initPromise.resolve();
+      return;
     }
   }
 
@@ -339,17 +384,39 @@ export class BibManager {
   }
 
   async loadStyles(styles: { id?: string; explicitPath?: string }[]) {
+    const res: string[] = [];
     for (const style of styles) {
       if (!style.id && !style.explicitPath) continue;
       if (!this.styleCache.has(style.explicitPath ?? style.id)) {
-        await getCSLStyle(
-          this.styleCache,
-          this.plugin.cacheDir,
-          style.id,
-          style.explicitPath
+        res.push(
+          await getCSLStyle(
+            this.styleCache,
+            this.plugin.cacheDir,
+            style.id,
+            style.explicitPath
+          )
         );
       }
     }
+    return res;
+  }
+
+  getNoteForNoteIndex(file: TFile, index: string) {
+    if (!this.fileCache.has(file)) {
+      return null;
+    }
+
+    const cache = this.fileCache.get(file);
+    const noteIndex = parseInt(index);
+
+    const cite = cache.citations.find((c) => c.noteIndex === noteIndex);
+
+    if (!cite.note) {
+      return null;
+    }
+
+    const doc = new DOMParser().parseFromString(cite.note, 'text/html');
+    return Array.from(doc.body.childNodes);
   }
 
   getBibForCiteKey(file: TFile, key: string) {

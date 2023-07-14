@@ -33,10 +33,13 @@ export function processCiteKeys(plugin: ReferenceList) {
 
     let node;
     while ((node = walker.nextNode())) {
-      const content = node.nodeValue;
-
       if (node.parentElement && node.parentElement.tagName === 'CODE') {
         continue;
+      }
+
+      let content = node.nodeValue;
+      if (node.parentElement.tagName === 'A') {
+        content = `[${content}]`;
       }
 
       let frag = createFragment();
@@ -47,27 +50,38 @@ export function processCiteKeys(plugin: ReferenceList) {
       for (const match of segments) {
         if (!didMatch) didMatch = true;
 
-        const renderedCiteIndex = sectionCites.findIndex((c) =>
+        const rendered = sectionCites.find((c) =>
           equal(onlyValType(c.data), onlyValType(match))
         );
 
-        if (renderedCiteIndex >= 0) {
-          const renderedCite = sectionCites[renderedCiteIndex];
+        if (rendered) {
           const preCite = content.substring(pos, match[0].from);
-
-          const attr = {
-            'data-citekey': renderedCite.citations.map((c) => c.id).join('|'),
+          const attr: Record<string, string> = {
+            'data-citekey': rendered.citations.map((c) => c.id).join('|'),
             'data-source': ctx.sourcePath,
           };
+
+          if (rendered.note) {
+            attr['data-note-index'] = rendered.noteIndex.toString();
+          }
 
           pos = match[match.length - 1].to;
 
           frag.appendText(preCite);
-          frag.createSpan({
+          const span = frag.createSpan({
             cls: 'pandoc-citation is-resolved',
-            text: renderedCite.val,
             attr: attr,
           });
+
+          if (/</.test(rendered.val)) {
+            const parsed = new DOMParser().parseFromString(
+              rendered.val,
+              'text/html'
+            );
+            span.append(...Array.from(parsed.body.childNodes));
+          } else {
+            span.setText(rendered.val);
+          }
 
           continue;
         }

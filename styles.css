@@ -189,6 +189,7 @@ body {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border-radius: 6px;
   width: 300px;
+  max-width: 95vw;
   line-height: 1.4;
   z-index: var(--layer-popover);
   overflow: hidden;
@@ -241,6 +242,17 @@ body {
   :not(.cm-hmd-internal-link, .cm-link-alias)
   > :is(.pandoc-citation, .at).is-unresolved {
   color: var(--pwc-citation-color-missing);
+}
+
+.pwc-tooltips
+  :not(a, .cm-hmd-internal-link, .cm-link-alias)
+  > :is(.pandoc-citation, .at).is-link {
+  color: var(--link-color);
+  cursor: var(--cursor-link);
+}
+
+.pandoc-citation > * {
+  pointer-events: none;
 }
 
 .pwc-success {
@@ -363,4 +375,8 @@ body {
   to {
     transform: rotate(360deg);
   }
+}
+
+.suggestion-container.pwc-suggest {
+  max-width: 95vh;
 }

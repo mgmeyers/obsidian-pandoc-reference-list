@@ -64,63 +64,73 @@ export class TooltipManager {
 
     let content: DocumentFragment = null;
 
-    for (const key of keys) {
-      const html = this.plugin.bibManager.getBibForCiteKey(
+    if (el.dataset.noteIndex) {
+      content = createFragment();
+      const html = this.plugin.bibManager.getNoteForNoteIndex(
         file as TFile,
-        key
-      ) as HTMLElement;
+        el.dataset.noteIndex
+      );
+      content.append(...html);
+    } else {
+      for (const key of keys) {
+        const html = this.plugin.bibManager.getBibForCiteKey(
+          file as TFile,
+          key
+        ) as HTMLElement;
 
-      if (html) {
-        if (!content) content = createFragment();
-        if (keys.length > 1) {
-          const inner = html.innerHTML;
-          const clipped = clip(inner, 100, { html: true });
-          const clone = html.cloneNode() as HTMLElement;
-          clone.innerHTML = clipped;
-          content.append(clone);
-        } else {
-          content.append(html);
+        if (html) {
+          if (!content) content = createFragment();
+          if (keys.length > 1) {
+            const inner = html.innerHTML;
+            const clipped = clip(inner, 100, { html: true });
+            const clone = html.cloneNode() as HTMLElement;
+            clone.innerHTML = clipped;
+            content.append(clone);
+          } else {
+            content.append(html);
+          }
         }
       }
     }
 
     const modClasses = this.plugin.settings.hideLinks ? ' collapsed-links' : '';
+    const tooltip = (this.tooltip = activeDocument.body.createDiv({
+      cls: `pwc-tooltip${modClasses}`,
+    }));
+    const rect = el.getBoundingClientRect();
 
-    this.tooltip = activeDocument.body.createDiv(
-      { cls: `pwc-tooltip${modClasses}` },
-      (div) => {
-        const rect = el.getBoundingClientRect();
+    if (rect.x === 0 && rect.y === 0) {
+      return this.hideTooltip();
+    }
 
-        if (this.plugin.settings.hideLinks) {
-          div.addClass('collapsed-links');
-        }
+    if (this.plugin.settings.hideLinks) {
+      tooltip.addClass('collapsed-links');
+    }
 
-        if (content) {
-          div.append(content);
-        } else {
-          div.addClass('is-missing');
-          div.createEl('em', {
-            text: t('No citation found for ') + el.dataset.citekey,
-          });
-        }
+    if (content) {
+      tooltip.append(content);
+    } else {
+      tooltip.addClass('is-missing');
+      tooltip.createEl('em', {
+        text: t('No citation found for ') + el.dataset.citekey,
+      });
+    }
 
-        setTimeout(() => {
-          const viewport = window.visualViewport;
-          const divRect = div.getBoundingClientRect();
+    activeWindow.setTimeout(() => {
+      const viewport = activeWindow.visualViewport;
+      const divRect = tooltip.getBoundingClientRect();
 
-          div.style.left =
-            rect.x + divRect.width + 10 > viewport.width
-              ? `${rect.x - (rect.x + divRect.width + 10 - viewport.width)}px`
-              : `${rect.x}px`;
-          div.style.top =
-            rect.bottom + divRect.height + 10 > viewport.height
-              ? `${rect.y - divRect.height - 5}px`
-              : `${rect.bottom + 5}px`;
-        });
-      }
-    );
+      tooltip.style.left =
+        rect.x + divRect.width + 10 > viewport.width
+          ? `${rect.x - (rect.x + divRect.width + 10 - viewport.width)}px`
+          : `${rect.x}px`;
+      tooltip.style.top =
+        rect.bottom + divRect.height + 10 > viewport.height
+          ? `${rect.y - divRect.height - 5}px`
+          : `${rect.bottom + 5}px`;
+    });
 
-    window.addEventListener('scroll', this.scrollHandler, {
+    activeWindow.addEventListener('scroll', this.scrollHandler, {
       capture: true,
     });
     this.isScrollBound = true;

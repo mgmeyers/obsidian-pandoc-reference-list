@@ -30,6 +30,7 @@ export class CiteSuggest extends EditorSuggest<
     this.app = app;
     this.plugin = plugin;
 
+    (this as any).suggestEl.addClass('pwc-suggest');
     (this as any).scope.register(['Mod'], 'Enter', (evt: KeyboardEvent) => {
       (this as any).suggestions.useSelectedItem(evt);
       return false;

@@ -5,6 +5,7 @@ export interface CiteProps {
   noteIndex: number;
   mode?: CiteMode;
   infix?: string;
+  makeOnly?: boolean;
 }
 
 export interface CiteprocCite {
@@ -21,16 +22,44 @@ function genUid(length: number): string {
   return `${Date.now()}-${array.join('')}`;
 }
 
-export function getCiteprocCites(groups: CitationGroup[]) {
+export function getCiteprocCites(
+  groups: CitationGroup[],
+  style: 'note' | 'in-text'
+) {
   const output: CiteprocCite[] = [];
   const idToGroup: Record<string, number> = {};
+  let noteIndex = 1;
 
   groups.forEach((group, gIdx) => {
     let mode: CiteMode;
     let infix: string;
     const id = genUid(6);
-
     const citationItems: Citation[] = [];
+
+    const pushMakeAuthorOnly = (cite: Citation, i: number) => {
+      const cid = id + i.toString();
+      idToGroup[cid] = gIdx;
+      output.push({
+        citationID: cid,
+        citationItems: [
+          {
+            ...cite,
+            ['author-only']: true,
+          },
+        ],
+        properties: {
+          noteIndex: 0,
+          makeOnly: true,
+        },
+      });
+    };
+
+    const transferProps = (from: Citation, to: Citation) => {
+      if (from.label) to.label = from.label;
+      if (from.locator) to.locator = from.locator;
+      if (from.prefix) to.prefix = from.prefix;
+      if (from.suffix) to.suffix = from.suffix;
+    };
 
     group.citations.forEach((g, i) => {
       const cite: Citation = {
@@ -38,31 +67,22 @@ export function getCiteprocCites(groups: CitationGroup[]) {
       };
 
       const next = group.citations[i + 1];
-
       if (i === 0 && g.composite) {
         if (g.suffix) {
-          const cid = id + i.toString();
-          idToGroup[cid] = gIdx;
-          output.push({
-            citationID: cid,
-            citationItems: [
-              {
-                ...cite,
-                ['author-only']: true,
-              },
-            ],
-            properties: {
-              noteIndex: 0,
-            },
-          });
           const nextCite = {
             ...cite,
-            ['suppress-author']: true,
+            ['suppress-author']: style !== 'note',
           };
-          if (g.label) nextCite.label = g.label;
-          if (g.locator) nextCite.locator = g.locator;
-          if (g.prefix) nextCite.prefix = g.prefix;
-          if (g.suffix) nextCite.suffix = g.suffix;
+          pushMakeAuthorOnly(cite, i);
+          transferProps(g, nextCite);
+          citationItems.push(nextCite);
+          return;
+        } else if (style === 'note' && g.composite) {
+          const nextCite = {
+            ...cite,
+          };
+          pushMakeAuthorOnly(cite, i);
+          transferProps(g, nextCite);
           citationItems.push(nextCite);
           return;
         } else {
@@ -75,36 +95,19 @@ export function getCiteprocCites(groups: CitationGroup[]) {
         next &&
         next['suppress-author']
       ) {
-        const cid = id + i.toString();
-        idToGroup[cid] = gIdx;
-        output.push({
-          citationID: cid,
-          citationItems: [
-            {
-              ...cite,
-              ['author-only']: true,
-            },
-          ],
-          properties: {
-            noteIndex: 0,
-          },
-        });
+        pushMakeAuthorOnly(cite, i);
         return;
       } else {
-        if (g['suppress-author']) cite['suppress-author'] = true;
+        if (g['suppress-author']) cite['suppress-author'] = style !== 'note';
         else if (g['author-only']) cite['author-only'] = true;
       }
 
-      if (g.label) cite.label = g.label;
-      if (g.locator) cite.locator = g.locator;
-      if (g.prefix) cite.prefix = g.prefix;
-      if (g.suffix) cite.suffix = g.suffix;
-
+      transferProps(g, cite);
       citationItems.push(cite);
     });
 
     const properties: CiteProps = {
-      noteIndex: 0,
+      noteIndex: noteIndex++,
     };
 
     if (mode) properties.mode = mode;
@@ -121,13 +124,6 @@ export function getCiteprocCites(groups: CitationGroup[]) {
   return { output, idToGroup };
 }
 
-function getPrePost(i: number, arr: CiteprocCite[]) {
-  return {
-    pre: arr.slice(0, i).map((c) => [c.citationID, 0]),
-    post: [] as Array<string | number>, //arr.slice(i + 1).map((c) => [c.citationID, 0]),
-  };
-}
-
 function decodeHtml(str: string) {
   const txt = createEl('textarea');
   txt.innerHTML = str;
@@ -135,62 +131,66 @@ function decodeHtml(str: string) {
 }
 
 function sanitize(val: string) {
-  return decodeHtml(val.replace(/ *\[NO_PRINTED_FORM\] */g, ''));
+  return decodeHtml(val.replace(/\[NO_PRINTED_FORM\] */g, ''));
 }
 
 export function cite(engine: any, group: CitationGroup[]) {
-  const { output, idToGroup } = getCiteprocCites(group);
-  const temp: RenderedCitation[] = [];
+  const { output, idToGroup } = getCiteprocCites(group, engine.opt.xclass);
 
-  output.forEach((cite, i, arr) => {
-    const { pre, post } = getPrePost(i, arr);
-    const res = engine.processCitationCluster(cite, pre, post);
+  const makeCites: CiteprocCite[] = [];
+  const realCites: CiteprocCite[] = [];
 
-    let rendered: RenderedCitation;
+  output.forEach((o) => {
+    if (o.properties.makeOnly) {
+      makeCites.push(o);
+    } else {
+      realCites.push(o);
+    }
+  });
 
-    res[1].forEach(([idx, str, id]: [number, string, string]) => {
-      const gid = idToGroup[id];
-      if (idx === i) {
-        rendered = {
-          ...group[gid],
-          val: str,
-        };
-      } else if (temp[idx]) {
-        temp[idx].val = str;
-      }
-    });
+  const bakedCites = engine.rebuildProcessorState(realCites, 'html');
+  const cites: Record<string, RenderedCitation> = {};
+  const makes: Record<string, RenderedCitation> = {};
 
-    temp.push(rendered);
+  makeCites.forEach((cite) => {
+    const cluster = engine.makeCitationCluster(cite.citationItems);
+    const gid = idToGroup[cite.citationID];
+    makes[gid] = {
+      ...group[gid],
+      val: sanitize(cluster),
+    };
+  });
+
+  realCites.forEach((cite, i) => {
+    const [id, noteIndex, str] = bakedCites[i];
+    const gid = idToGroup[id];
+    cites[gid] = {
+      ...group[gid],
+      val: sanitize(str),
+      noteIndex,
+    };
   });
 
   const out: RenderedCitation[] = [];
-  let loc: string;
-  let tempR: RenderedCitation;
+  const keys = Object.keys(cites);
 
-  for (const cite of temp) {
-    const thisLoc = `${cite.from}-${cite.to}`;
-    if (!tempR) {
-      loc = thisLoc;
-      tempR = cite;
-      continue;
+  keys.sort();
+  keys.forEach((k) => {
+    const cite = cites[k];
+    const isNoteStyle = engine.opt.xclass === 'note';
+    if (makes[k]) {
+      if (isNoteStyle) {
+        cite.note = cite.val;
+        cite.val = `${makes[k].val}<sup>${cite.noteIndex}</sup>`;
+      } else {
+        cite.val = `${makes[k].val} ${cite.val}`;
+      }
+    } else if (isNoteStyle) {
+      cite.note = cite.val;
+      cite.val = `<sup>${cite.noteIndex}</sup>`;
     }
-
-    if (loc !== thisLoc) {
-      tempR.val = sanitize(tempR.val);
-      out.push(tempR);
-      loc = thisLoc;
-      tempR = cite;
-      continue;
-    }
-
-    loc = thisLoc;
-    tempR.val += ` ${cite.val}`;
-  }
-
-  if (tempR) {
-    tempR.val = sanitize(tempR.val);
-  }
-  out.push(tempR);
+    out.push(cite);
+  });
 
   return out;
 }

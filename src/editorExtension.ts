@@ -11,6 +11,7 @@ import {
 } from '@codemirror/view';
 import { Tree } from '@lezer/common';
 import {
+  Keymap,
   editorInfoField,
   editorLivePreviewField,
   livePreviewState,
@@ -31,19 +32,24 @@ const citeMark = (
   citekey: string,
   sourceFile: string | undefined,
   isResolved: boolean,
-  isUnresolved: boolean
+  isUnresolved: boolean,
+  noteIndex?: string
 ) => {
   const cls = ['cm-pandoc-citation', 'pandoc-citation'];
 
   if (isResolved) cls.push('is-resolved');
   if (isUnresolved) cls.push('is-unresolved');
 
+  const attr: Record<string, string> = {
+    'data-citekey': citekey,
+    'data-source': sourceFile || '',
+  };
+
+  if (noteIndex) attr.noteIndex = noteIndex;
+
   return Decoration.mark({
     class: cls.join(' '),
-    attributes: {
-      'data-citekey': citekey,
-      'data-source': sourceFile || '',
-    },
+    attributes: attr,
   });
 };
 
@@ -62,11 +68,13 @@ const citeMarkExtra = (type: string) => {
 class CiteWidget extends WidgetType {
   cite: RenderedCitation;
   sourcePath?: string;
+  linkText?: string;
 
-  constructor(cite: RenderedCitation, sourcePath?: string) {
+  constructor(cite: RenderedCitation, sourcePath?: string, linkText?: string) {
     super();
     this.cite = cite;
     this.sourcePath = sourcePath;
+    this.linkText = linkText;
   }
 
   eq(widget: this): boolean {
@@ -74,10 +82,14 @@ class CiteWidget extends WidgetType {
   }
 
   toDOM() {
-    const attr = {
+    const attr: Record<string, string> = {
       'data-citekey': this.cite.citations.map((c) => c.id).join('|'),
       'data-source': this.sourcePath,
     };
+
+    if (this.cite.note) {
+      attr['data-note-index'] = this.cite.noteIndex.toString();
+    }
 
     return createSpan(
       {
@@ -85,12 +97,26 @@ class CiteWidget extends WidgetType {
         attr: attr,
       },
       (span) => {
+        if (this.linkText) {
+          span.addClass('is-link');
+          span.addEventListener('click', (evt) => {
+            const newPane = Keymap.isModEvent(evt);
+            activeWindow.setTimeout(() => {
+              app.workspace.openLinkText(
+                this.linkText,
+                this.sourcePath,
+                newPane
+              );
+            }, 100);
+          });
+        }
+
         if (/</.test(this.cite.val)) {
           const parsed = new DOMParser().parseFromString(
             this.cite.val,
             'text/html'
           );
-          span.append(parsed.body.firstChild);
+          span.append(...Array.from(parsed.body.childNodes));
         } else {
           span.setText(this.cite.val);
         }
@@ -103,9 +129,13 @@ class CiteWidget extends WidgetType {
   }
 }
 
-const citeDeco = (cite: RenderedCitation, sourcePath?: string) =>
+const citeDeco = (
+  cite: RenderedCitation,
+  sourcePath?: string,
+  linkText?: string
+) =>
   Decoration.replace({
-    widget: new CiteWidget(cite, sourcePath),
+    widget: new CiteWidget(cite, sourcePath, linkText),
   });
 
 function onlyValType(segs: Segment[]) {
@@ -150,15 +180,27 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
+          const rendered = citekeyCache?.citations.find((c) =>
+            equal(onlyValType(c?.data || []), onlyValType(match))
+          );
 
           if (isLivePreview) {
-            const rendered = citekeyCache?.citations.find((c) =>
-              equal(onlyValType(c?.data || []), onlyValType(match))
-            );
-
             if (rendered) {
               const start = from + match[0].from;
               const end = from + match[match.length - 1].to;
+              const center = Math.round((start + end) / 2);
+
+              let linkText: string;
+
+              const centerNode = tree.resolveInner(center, 0);
+
+              if (
+                centerNode.type
+                  .prop(tokenClassNodeProp)
+                  .includes('hmd-internal-link')
+              ) {
+                linkText = view.state.sliceDoc(centerNode.from, centerNode.to);
+              }
 
               if (
                 view.state.selection.ranges.every((r) => {
@@ -171,7 +213,11 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                   );
                 })
               ) {
-                b.add(start, end, citeDeco(rendered, obsView?.file.path));
+                b.add(
+                  start,
+                  end,
+                  citeDeco(rendered, obsView?.file.path, linkText)
+                );
                 continue;
               }
             }
@@ -205,7 +251,8 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
                     part.val,
                     obsView?.file.path,
                     isResolved,
-                    isUnresolved
+                    isUnresolved,
+                    rendered?.note ? rendered.noteIndex.toString() : undefined
                   )
                 );
                 continue;
