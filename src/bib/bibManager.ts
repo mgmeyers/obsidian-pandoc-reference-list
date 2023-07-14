@@ -221,19 +221,24 @@ export class BibManager {
       }
     }
 
-    const engine = this.buildEngine(
-      lang,
-      this.langCache,
-      style,
-      this.styleCache,
-      bibCache
-    );
+    try {
+      const engine = this.buildEngine(
+        lang,
+        this.langCache,
+        style,
+        this.styleCache,
+        bibCache
+      );
 
-    return {
-      bibCache,
-      fuse,
-      engine,
-    };
+      return {
+        bibCache,
+        fuse,
+        engine,
+      };
+    } catch (e) {
+      console.error(e);
+      return this;
+    }
   }
 
   async loadGlobalBibFile(fromCache?: boolean) {
@@ -266,13 +271,17 @@ export class BibManager {
     });
     if (!this.styleCache.has(style)) return;
 
-    this.engine = this.buildEngine(
-      lang,
-      this.langCache,
-      style,
-      this.styleCache,
-      this.bibCache
-    );
+    try {
+      this.engine = this.buildEngine(
+        lang,
+        this.langCache,
+        style,
+        this.styleCache,
+        this.bibCache
+      );
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   async loadGlobalZBib(fromCache?: boolean) {
@@ -314,13 +323,17 @@ export class BibManager {
     });
     if (!this.styleCache.has(style)) return;
 
-    this.engine = this.buildEngine(
-      lang,
-      this.langCache,
-      style,
-      this.styleCache,
-      this.bibCache
-    );
+    try {
+      this.engine = this.buildEngine(
+        lang,
+        this.langCache,
+        style,
+        this.styleCache,
+        this.bibCache
+      );
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   buildEngine(
@@ -330,6 +343,17 @@ export class BibManager {
     styleCache: Map<string, string>,
     bibCache: Map<string, PartialCSLEntry>
   ) {
+    const styleXML = styleCache.get(style);
+    if (!styleXML) {
+      throw new Error(
+        'Error: attempting to build citproc engine with empty CSL style'
+      );
+    }
+    if (!langCache.get(lang)) {
+      throw new Error(
+        'Error: attempting to build citproc engine with empty CSL locale'
+      );
+    }
     const engine = new CSL.Engine(
       {
         retrieveLocale: (id: string) => {
@@ -339,7 +363,7 @@ export class BibManager {
           return bibCache.get(id);
         },
       },
-      styleCache.get(style),
+      styleXML,
       lang
     );
     engine.opt.development_extensions.wrap_url_and_doi = true;

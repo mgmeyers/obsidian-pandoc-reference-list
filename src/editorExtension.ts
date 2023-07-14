@@ -174,15 +174,23 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
       // Don't get the syntax tree until we have to
       let tree: Tree;
 
+      const matched = new Set<RenderedCitation>();
+
       for (const { from, to } of view.visibleRanges) {
         const range = view.state.sliceDoc(from, to);
         const segments = getCitationSegments(range);
 
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
-          const rendered = citekeyCache?.citations.find((c) =>
-            equal(onlyValType(c?.data || []), onlyValType(match))
+          const rendered = citekeyCache?.citations.find(
+            (c) =>
+              !matched.has(c) &&
+              equal(onlyValType(c?.data || []), onlyValType(match))
           );
+
+          if (rendered) {
+            matched.add(rendered);
+          }
 
           if (isLivePreview) {
             if (rendered) {
