@@ -62,10 +62,10 @@ export class TooltipManager {
 
     const keys = el.dataset.citekey.split('|');
 
-    let content: DocumentFragment = null;
+    let content: DocumentFragment | HTMLElement = null;
 
     if (el.dataset.noteIndex) {
-      content = createFragment();
+      content = createDiv();
       const html = this.plugin.bibManager.getNoteForNoteIndex(
         file as TFile,
         el.dataset.noteIndex
