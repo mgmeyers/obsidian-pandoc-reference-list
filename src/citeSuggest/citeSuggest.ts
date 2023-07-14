@@ -53,24 +53,31 @@ export class CiteSuggest extends EditorSuggest<
     ]);
   }
 
-  async getSuggestions(context: EditorSuggestContext) {
-    if (!context.query || context.query.includes(' ')) {
+  getSuggestions(context: EditorSuggestContext) {
+    if (
+      !context.query ||
+      context.query.length < 2 ||
+      context.query.includes(' ')
+    ) {
       return null;
     }
+
     const { plugin } = this;
     if (!plugin.initPromise.settled) return null;
 
     const { bibManager } = plugin;
+
+    let fuse = bibManager.fuse;
     if (bibManager.fileCache.has(context.file)) {
       const cache = bibManager.fileCache.get(context.file);
-      return cache.source.fuse.search(context.query, {
-        limit: this.limit,
-      });
+      fuse = cache.source.fuse;
     }
 
-    return bibManager.fuse.search(context.query, {
+    const results = fuse?.search(context.query, {
       limit: this.limit,
     });
+
+    return results?.length ? results : null;
   }
 
   renderSuggestion(

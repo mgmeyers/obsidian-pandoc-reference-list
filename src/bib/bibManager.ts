@@ -554,12 +554,12 @@ export class BibManager {
       : null;
 
     if (this.plugin.settings.hideLinks) {
-      parsed.findAll('a').forEach((l) => {
+      parsed?.findAll('a').forEach((l) => {
         l.setAttribute('aria-label', l.innerText);
       });
     }
 
-    parsed.findAll('.csl-entry').forEach((e) => {
+    parsed?.findAll('.csl-entry').forEach((e) => {
       e.setAttribute('aria-label', t('Click to copy'));
       e.onClickEvent(() => copyElToClipboard(e));
       const div = createDiv({ cls: 'csl-entry-wrapper' });
