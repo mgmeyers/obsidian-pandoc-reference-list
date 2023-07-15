@@ -271,7 +271,7 @@ export class BibManager {
       'https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl';
     const lang = settings.cslLang ?? 'en-US';
 
-    this.getLangAndStyle(lang, {
+    await this.getLangAndStyle(lang, {
       id: settings.cslStylePath || style,
       explicitPath: settings.cslStylePath,
     });
@@ -352,12 +352,12 @@ export class BibManager {
     const styleXML = styleCache.get(style);
     if (!styleXML) {
       throw new Error(
-        'Error: attempting to build citproc engine with empty CSL style'
+        'attempting to build citproc engine with empty CSL style'
       );
     }
     if (!langCache.get(lang)) {
       throw new Error(
-        'Error: attempting to build citproc engine with empty CSL locale'
+        'attempting to build citproc engine with empty CSL locale'
       );
     }
     const engine = new CSL.Engine(

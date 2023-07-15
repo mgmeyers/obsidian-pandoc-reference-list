@@ -94,10 +94,10 @@ export async function getCSLLocale(
         rej(new Error('Error: cannot download locale'));
       });
       result.on('end', () => {
-        try {
+        if (/^404: Not Found/.test(output)) {
+          rej(new Error('Error downloading locale: 404: Not Found'));
+        } else {
           res(output);
-        } catch (e) {
-          rej(e);
         }
       });
     });
