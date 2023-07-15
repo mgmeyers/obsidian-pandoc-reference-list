@@ -84,15 +84,12 @@ describe('getStyle()', () => {
     const style = await getCSLStyle(
       cache,
       __dirname,
-      'australian-guide-to-legal-citation-3rd-edition'
+      'https://www.zotero.org/styles/australian-guide-to-legal-citation-3rd-edition'
     );
     expect(typeof style).toBe('string');
     expect(
       existsSync(
-        path.join(
-          __dirname,
-          'australian-guide-to-legal-citation-3rd-edition.csl'
-        )
+        path.join(__dirname, 'australian-guide-to-legal-citation-3rd-edition')
       )
     ).toBe(true);
     await getCSLStyle(
@@ -101,7 +98,7 @@ describe('getStyle()', () => {
       'australian-guide-to-legal-citation-3rd-edition'
     );
     rmSync(
-      path.join(__dirname, 'australian-guide-to-legal-citation-3rd-edition.csl')
+      path.join(__dirname, 'australian-guide-to-legal-citation-3rd-edition')
     );
   });
 });

@@ -24,7 +24,8 @@ function genUid(length: number): string {
 
 export function getCiteprocCites(
   groups: CitationGroup[],
-  style: 'note' | 'in-text'
+  style: 'note' | 'in-text',
+  ids: string[] = []
 ) {
   const output: CiteprocCite[] = [];
   const idToGroup: Record<string, number> = {};
@@ -33,7 +34,7 @@ export function getCiteprocCites(
   groups.forEach((group, gIdx) => {
     let mode: CiteMode;
     let infix: string;
-    const id = genUid(6);
+    const id = ids[gIdx] ?? genUid(6);
     const citationItems: Citation[] = [];
 
     const pushMakeAuthorOnly = (cite: Citation, i: number) => {
@@ -125,7 +126,7 @@ export function getCiteprocCites(
 }
 
 function decodeHtml(str: string) {
-  const txt = createEl('textarea');
+  const txt = document.createElement('textarea');
   txt.innerHTML = str;
   return txt.value;
 }

@@ -5,7 +5,6 @@ import https from 'https';
 import download from 'download';
 import { request } from 'http';
 import { CSLList, PartialCSLEntry } from './types';
-import { getVaultRoot } from 'src/helpers';
 
 export const DEFAULT_ZOTERO_PORT = '23119';
 
@@ -17,12 +16,17 @@ function ensureDir(dir: string) {
 
 export async function bibToCSL(
   bibPath: string,
-  pathToPandoc: string
+  pathToPandoc: string,
+  getVaultRoot?: () => string
 ): Promise<PartialCSLEntry[]> {
   if (!fs.existsSync(bibPath)) {
     const orig = bibPath;
-    bibPath = path.join(getVaultRoot(), bibPath);
-    if (!fs.existsSync(bibPath)) {
+    if (getVaultRoot) {
+      bibPath = path.join(getVaultRoot(), bibPath);
+      if (!fs.existsSync(bibPath)) {
+        throw new Error(`bibToCSL: cannot access bibliography file '${orig}'.`);
+      }
+    } else {
       throw new Error(`bibToCSL: cannot access bibliography file '${orig}'.`);
     }
   }

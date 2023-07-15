@@ -485,7 +485,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
         mode: 'composite',
       },
     },
@@ -499,7 +499,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
       },
     },
   ],
@@ -512,7 +512,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
         mode: 'composite',
       },
     },
@@ -528,7 +528,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
         mode: 'composite',
       },
     },
@@ -543,6 +543,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
+        makeOnly: true,
         noteIndex: 0,
       },
     },
@@ -558,7 +559,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
       },
     },
   ],
@@ -578,7 +579,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
       },
     },
   ],
@@ -593,7 +594,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
         mode: 'composite',
       },
     },
@@ -608,7 +609,7 @@ const citeprocCites: Record<string, CiteprocCite[]> = {
         },
       ],
       properties: {
-        noteIndex: 0,
+        noteIndex: 1,
       },
     },
   ],
@@ -618,9 +619,9 @@ describe('getCiteprocCites()', () => {
   Object.keys(citationFixtures).forEach((k) => {
     if (!citeprocCites[k]) return;
     it(k, () => {
-      expect(getCiteprocCites([citationFixtures[k]], k).output).toEqual(
-        citeprocCites[k]
-      );
+      expect(
+        getCiteprocCites([citationFixtures[k]], 'in-text', [k]).output
+      ).toEqual(citeprocCites[k]);
     });
   });
 });

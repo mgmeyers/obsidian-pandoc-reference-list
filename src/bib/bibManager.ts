@@ -4,7 +4,11 @@ import ReferenceList from 'src/main';
 import { PartialCSLEntry } from './types';
 import Fuse from 'fuse.js';
 import { bibToCSL, getCSLLocale, getCSLStyle, getZBib } from './helpers';
-import { PromiseCapability, copyElToClipboard } from 'src/helpers';
+import {
+  PromiseCapability,
+  copyElToClipboard,
+  getVaultRoot,
+} from 'src/helpers';
 import {
   RenderedCitation,
   getCitationSegments,
@@ -206,7 +210,8 @@ export class BibManager {
       try {
         const bib = await bibToCSL(
           settings.bibliography,
-          this.plugin.settings.pathToPandoc
+          this.plugin.settings.pathToPandoc,
+          getVaultRoot
         );
         bibCache = new Map();
 
@@ -248,7 +253,8 @@ export class BibManager {
     if (!fromCache || this.bibCache.size === 0) {
       const bib = await bibToCSL(
         settings.pathToBibliography,
-        settings.pathToPandoc
+        settings.pathToPandoc,
+        getVaultRoot
       );
 
       this.bibCache = new Map();
