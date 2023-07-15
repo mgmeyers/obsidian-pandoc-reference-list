@@ -56,7 +56,7 @@ function newState(): State {
 }
 
 const alphaNumeric = /[\p{L}\p{N}]/u;
-const punct = /[:.#$%&\-+?<>~/]/;
+const punct = /[:.#$%&\-+?<>~_/]/;
 const nonKeyPunct = /\p{P}/u;
 const space = /[ \t\v]/;
 const preKey = /[ \t\v[\-\r\n;]/;
