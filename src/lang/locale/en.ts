@@ -56,7 +56,8 @@ export default {
     'See here for a list of available language codes',
   'Cannot connect to Zotero': 'Cannot connect to Zotero',
   'Start Zotero and try again.': 'Start Zotero and try again.',
-  'Groups to Include in Bibliography': 'Groups to Include in Bibliography',
+  'Libraries to Include in Bibliography':
+    'Libraries to Include in Bibliography',
   'Please provide the path to your pandoc compatible bibliography file in the Pandoc Reference List plugin settings.':
     'Please provide the path to your pandoc compatible bibliography file in the Pandoc Reference List plugin settings.',
   'Refresh Bibliography': 'Refresh Bibliography',

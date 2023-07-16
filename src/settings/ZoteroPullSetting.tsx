@@ -62,6 +62,14 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceList }) {
             onClick={() => {
               setIsEnabled((cur) => {
                 plugin.settings.pullFromZotero = !cur;
+                if (connected && activeGroups.length == 0) {
+                  const myLibrary = possibleGroups.find((g) => g.id === 1);
+                  if (myLibrary) {
+                    activeGroups.push(myLibrary);
+                    plugin.settings.zoteroGroups = activeGroups;
+                    setActiveGroups([...activeGroups]);
+                  }
+                }
                 plugin.saveSettings(() => plugin.bibManager.reinit(true));
                 return !cur;
               });
@@ -103,7 +111,7 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceList }) {
             </SettingItem>
           </div>
           <div className="setting-item pwc-setting-item-wrapper">
-            <SettingItem name={'Groups to Include in Bibliography'} />
+            <SettingItem name={t('Libraries to Include in Bibliography')} />
             {possibleGroups.map((g) => {
               const isEnabled = activeGroups.some((g2) => g2.id === g.id);
               return (
