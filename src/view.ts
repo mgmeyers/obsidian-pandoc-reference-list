@@ -24,7 +24,9 @@ export class ReferenceListView extends ItemView {
 
   setViewContent(bib: HTMLElement) {
     if (bib && this.contentEl.firstChild !== bib) {
+      let count = 0;
       bib.findAll('.csl-entry').forEach((e) => {
+        count++;
         const leafRoot = this.leaf.getRoot();
         if (leafRoot) {
           const tooltipPos =
@@ -40,18 +42,26 @@ export class ReferenceListView extends ItemView {
         },
         (div) => {
           div.createDiv({ text: this.getDisplayText() });
-          div.createDiv(
-            {
-              cls: 'clickable-icon',
-              attr: {
-                'aria-label': t('Copy list'),
-              },
-            },
-            (btn) => {
-              setIcon(btn, 'lucide-copy');
-              btn.onClickEvent(() => copyElToClipboard(bib));
+          div.createDiv({}, (div) => {
+            if (count) {
+              div.createDiv({
+                cls: 'pwc-reference-list__count',
+                text: count.toString(),
+              });
             }
-          );
+            div.createDiv(
+              {
+                cls: 'clickable-icon',
+                attr: {
+                  'aria-label': t('Copy list'),
+                },
+              },
+              (btn) => {
+                setIcon(btn, 'lucide-copy');
+                btn.onClickEvent(() => copyElToClipboard(bib));
+              }
+            );
+          });
         }
       );
       this.contentEl.append(bib);

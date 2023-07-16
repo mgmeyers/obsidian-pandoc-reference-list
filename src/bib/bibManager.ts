@@ -664,7 +664,7 @@ export class BibManager {
   }
 
   dispatchResult(file: TFile, result: FileCache) {
-    app.workspace.getLeavesOfType('markdown').find((l) => {
+    app.workspace.getLeavesOfType('markdown').forEach((l) => {
       const view = l.view as MarkdownView;
       if (view.file === file) {
         const renderer = (view.previewMode as any).renderer;
