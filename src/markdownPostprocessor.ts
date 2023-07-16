@@ -19,8 +19,8 @@ function onlyValType(segs: Segment[]) {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function processCiteKeys(plugin: ReferenceList) {
   return (el: HTMLElement, ctx: MarkdownPostProcessorContext) => {
-    const walker = activeDocument.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const toRemove: Node[] = [];
+    const walker = el.doc.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const sectionInfo = ctx.getSectionInfo(el);
 
     if (!sectionInfo) return;
@@ -30,6 +30,8 @@ export function processCiteKeys(plugin: ReferenceList) {
       sectionInfo.lineStart,
       sectionInfo.lineEnd
     );
+
+    if (!sectionCites.length) return;
 
     let node;
     while ((node = walker.nextNode())) {
@@ -69,8 +71,8 @@ export function processCiteKeys(plugin: ReferenceList) {
 
           frag.appendText(preCite);
           const span = frag.createSpan({
-            cls: 'pandoc-citation is-resolved',
             attr: attr,
+            cls: getCiteClass(true, false),
           });
 
           if (/</.test(rendered.val)) {
@@ -82,6 +84,8 @@ export function processCiteKeys(plugin: ReferenceList) {
           } else {
             span.setText(rendered.val);
           }
+
+          plugin.tooltipManager.bindPreviewTooltipHandler(span);
 
           continue;
         }

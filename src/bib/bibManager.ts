@@ -466,7 +466,12 @@ export class BibManager {
     }
 
     const doc = new DOMParser().parseFromString(html, 'text/html');
-    return doc.body.firstChild;
+    const el = doc.body.firstElementChild as HTMLElement;
+    if (el) {
+      el.dataset.citekey = key;
+      return this.prepBibHTML(el, file, true);
+    }
+    return el;
   }
 
   async getReferenceList(file: TFile, content: string) {
@@ -578,20 +583,51 @@ export class BibManager {
     for (const entry of entries) htmlStr.push(entry);
 
     htmlStr.push(metadata.bibend);
-    const parsed = entries.length
+    let parsed = entries.length
       ? (new DOMParser().parseFromString(htmlStr.join(''), 'text/html').body
-          .firstChild as HTMLElement)
+          .firstElementChild as HTMLElement)
       : null;
 
+    if (parsed) {
+      parsed = this.prepBibHTML(parsed, file);
+    }
+
+    const result: FileCache = {
+      keys: citeKeys,
+      resolvedKeys,
+      unresolvedKeys,
+      bib: parsed,
+      citations,
+      citeBibMap,
+      settings,
+      source,
+    };
+
+    this.fileCache.set(file, result);
+    this.dispatchResult(file, result);
+
+    return result.bib;
+  }
+
+  prepBibHTML(parsed: HTMLElement, file: TFile, inTooltip?: boolean) {
     if (this.plugin.settings.hideLinks) {
       parsed?.findAll('a').forEach((l) => {
         l.setAttribute('aria-label', l.innerText);
       });
     }
 
+    if (parsed?.hasClass('csl-entry')) {
+      const entry = parsed;
+      parsed = createDiv();
+      parsed.append(entry);
+    }
+
     parsed?.findAll('.csl-entry').forEach((e) => {
-      e.setAttribute('aria-label', t('Click to copy'));
-      e.onClickEvent(() => copyElToClipboard(e));
+      if (!inTooltip) {
+        e.setAttribute('aria-label', t('Click to copy'));
+        e.onClickEvent(() => copyElToClipboard(e));
+      }
+
       const div = createDiv({ cls: 'csl-entry-wrapper' });
       e.parentElement.insertBefore(div, e);
       div.append(e);
@@ -613,7 +649,7 @@ export class BibManager {
 
         div.createDiv({}, (div) =>
           div.createDiv('clickable-icon', (div) => {
-            setIcon(div, 'lucide-sticky-note');
+            setIcon(div, 'lucide-file-text');
             div.setAttr('aria-label', t('Open literature note'));
             div.onClickEvent((e) => {
               const newPane = Keymap.isModEvent(e);
@@ -624,21 +660,7 @@ export class BibManager {
       }
     });
 
-    const result: FileCache = {
-      keys: citeKeys,
-      resolvedKeys,
-      unresolvedKeys,
-      bib: parsed,
-      citations,
-      citeBibMap,
-      settings,
-      source,
-    };
-
-    this.fileCache.set(file, result);
-    this.dispatchResult(file, result);
-
-    return result.bib;
+    return parsed;
   }
 
   dispatchResult(file: TFile, result: FileCache) {

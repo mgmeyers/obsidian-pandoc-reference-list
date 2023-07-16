@@ -90,15 +90,7 @@ body {
   padding: 0 5px;
   display: flex;
   justify-content: space-between;
-}
-
-.pwc-copy-list {
-  cursor: pointer;
-  color: var(--text-muted);
-}
-
-.pwc-copy-list:hover {
-  color: var(--text-accent);
+  align-items: center;
 }
 
 .pwc-no-content {
@@ -108,15 +100,21 @@ body {
 }
 
 .csl-entry-wrapper {
+  --icon-size: var(--icon-s);
+  --icon-stroke: var(--icon-s-stroke-width);
+
   display: flex;
   padding: 1em 5px;
   gap: var(--size-4-2);
 }
 
+.pwc-tooltip .csl-entry-wrapper {
+  padding: 0;
+}
+
 .csl-entry {
   font-size: var(--pwc-font-size);
   word-wrap: break-word;
-  cursor: pointer;
   gap: var(--size-4-2);
 }
 
@@ -193,14 +191,15 @@ body {
   border: 1px solid var(--background-modifier-border);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border-radius: 6px;
-  width: 300px;
-  max-width: 95vw;
+  width: 95vw;
+  max-width: 300px;
   line-height: 1.4;
   z-index: var(--layer-popover);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: var(--size-4-2);
+  user-select: text;
 }
 
 .pwc-tooltip .csl-entry {
@@ -383,5 +382,6 @@ body {
 }
 
 .suggestion-container.pwc-suggest {
-  max-width: 95vh;
+  max-width: 500px;
+  width: 95vw;
 }

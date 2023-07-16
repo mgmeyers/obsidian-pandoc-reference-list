@@ -13,6 +13,7 @@ import {
   citeKeyCacheField,
   citeKeyPlugin,
   bibManagerField,
+  editorTooltipHandler,
 } from './editorExtension';
 import { t } from './lang/helpers';
 import { processCiteKeys } from './markdownPostprocessor';
@@ -63,13 +64,14 @@ export default class ReferenceList extends Plugin {
 
     this.addSettingTab(new ReferenceListSettingsTab(this));
     this.registerEditorSuggest(new CiteSuggest(app, this));
+    this.tooltipManager = new TooltipManager(this);
     this.registerMarkdownPostProcessor(processCiteKeys(this));
     this.registerEditorExtension([
       bibManagerField.init(() => this.bibManager),
       citeKeyCacheField,
       citeKeyPlugin,
+      editorTooltipHandler(this.tooltipManager),
     ]);
-    this.tooltipManager = new TooltipManager(this);
 
     // No need to block execution
     fixPath().then(async () => {

@@ -42,13 +42,13 @@ export class ReferenceListView extends ItemView {
           div.createDiv({ text: this.getDisplayText() });
           div.createDiv(
             {
-              cls: 'pwc-copy-list',
+              cls: 'clickable-icon',
               attr: {
                 'aria-label': t('Copy list'),
               },
             },
             (btn) => {
-              setIcon(btn, 'select-all-text');
+              setIcon(btn, 'lucide-copy');
               btn.onClickEvent(() => copyElToClipboard(bib));
             }
           );

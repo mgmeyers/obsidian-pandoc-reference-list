@@ -25,6 +25,7 @@ import {
 } from './parser/parser';
 import { BibManager, FileCache } from './bib/bibManager';
 import equal from 'fast-deep-equal';
+import { TooltipManager } from './tooltip';
 
 const ignoreListRegEx = /code|math|templater|hashtag/;
 
@@ -64,6 +65,10 @@ const citeMarkExtra = (type: string) => {
     class: `cm-pandoc-citation-extra ${type}`,
   });
 };
+
+export function editorTooltipHandler(manager: TooltipManager) {
+  return EditorView.domEventHandlers(manager.getEditorTooltipHandler());
+}
 
 class CiteWidget extends WidgetType {
   cite: RenderedCitation;
