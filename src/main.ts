@@ -151,14 +151,14 @@ export default class ReferenceList extends Plugin {
       )
     );
 
-    this.initStatusBar();
-
     (async () => {
+      this.initStatusBar();
       this.setStatusBarLoading();
+
       await this.initPromise.promise;
       await this.bibManager.initPromise.promise;
-      this.setStatusBarIdle();
 
+      this.setStatusBarIdle();
       this.processReferences();
     })();
   }

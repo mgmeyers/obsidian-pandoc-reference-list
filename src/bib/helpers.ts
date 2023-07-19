@@ -228,6 +228,13 @@ export async function getZUserGroups(
   });
 }
 
+function applyGroupID(list: CSLList, groupId: number) {
+  return list.map((item) => {
+    item.groupID = groupId;
+    return item;
+  });
+}
+
 export async function getZBib(
   port: string = DEFAULT_ZOTERO_PORT,
   cacheDir: string,
@@ -238,7 +245,10 @@ export async function getZBib(
   if (!(await isZoteroRunning(port))) {
     ensureDir(cacheDir);
     if (fs.existsSync(cached)) {
-      return JSON.parse(fs.readFileSync(cached).toString()) as CSLList;
+      return applyGroupID(
+        JSON.parse(fs.readFileSync(cached).toString()) as CSLList,
+        groupId
+      );
     }
     return null;
   }
@@ -251,7 +261,7 @@ export async function getZBib(
 
   fs.writeFileSync(cached, str);
 
-  return JSON.parse(str) as CSLList;
+  return applyGroupID(JSON.parse(str) as CSLList, groupId);
 }
 
 export async function isZoteroRunning(port: string = DEFAULT_ZOTERO_PORT) {
@@ -267,4 +277,71 @@ export async function isZoteroRunning(port: string = DEFAULT_ZOTERO_PORT) {
   ]);
 
   return res?.toString() === 'ready';
+}
+
+export async function getItemJSONFromCiteKeys(
+  port: string = DEFAULT_ZOTERO_PORT,
+  citeKeys: string[],
+  libraryID: number
+) {
+  if (!(await isZoteroRunning(port))) return null;
+
+  let res: any;
+  try {
+    res = await new Promise((res, rej) => {
+      const body = JSON.stringify({
+        jsonrpc: '2.0',
+        method: 'item.export',
+        params: [citeKeys, '36a3b0b5-bad0-4a04-b79b-441c7cef77db', libraryID],
+      });
+
+      const postRequest = request(
+        {
+          host: '127.0.0.1',
+          port: port,
+          path: '/better-bibtex/json-rpc',
+          method: 'POST',
+          headers: {
+            ...defaultHeaders,
+            'Content-Length': Buffer.byteLength(body),
+          },
+        },
+        (result) => {
+          let output = '';
+
+          result.setEncoding('utf8');
+          result.on('data', (chunk) => (output += chunk));
+          result.on('error', (e) => rej(`Error connecting to Zotero: ${e}`));
+          result.on('close', () => {
+            rej(new Error('Error: cannot connect to Zotero'));
+          });
+          result.on('end', () => {
+            try {
+              res(JSON.parse(output));
+            } catch (e) {
+              rej(e);
+            }
+          });
+        }
+      );
+
+      postRequest.write(body);
+      postRequest.end();
+    });
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+
+  try {
+    if (res.error?.message) {
+      console.error(new Error(res.error.message));
+      return null;
+    }
+
+    return JSON.parse(res.result[2]).items;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }

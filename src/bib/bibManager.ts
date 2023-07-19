@@ -3,7 +3,13 @@ import CSL from 'citeproc';
 import ReferenceList from 'src/main';
 import { PartialCSLEntry } from './types';
 import Fuse from 'fuse.js';
-import { bibToCSL, getCSLLocale, getCSLStyle, getZBib } from './helpers';
+import {
+  bibToCSL,
+  getCSLLocale,
+  getCSLStyle,
+  getItemJSONFromCiteKeys,
+  getZBib,
+} from './helpers';
 import {
   PromiseCapability,
   copyElToClipboard,
@@ -128,6 +134,8 @@ export class BibManager {
   bibCache: Map<string, PartialCSLEntry> = new Map();
   fuse: Fuse<PartialCSLEntry>;
   engine: any;
+
+  zCitekeyToLinks: Map<string, string> = new Map();
 
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
@@ -589,6 +597,9 @@ export class BibManager {
       : null;
 
     if (parsed) {
+      if (this.plugin.settings.pullFromZotero && !settings?.bibliography) {
+        await this.getZLinksForKeys(resolvedKeys);
+      }
       parsed = this.prepBibHTML(parsed, file);
     }
 
@@ -607,6 +618,45 @@ export class BibManager {
     this.dispatchResult(file, result);
 
     return result.bib;
+  }
+
+  async getZLinksForKeys(citekeys: Set<string>) {
+    const queries: Record<number, string[]> = {};
+
+    citekeys.forEach((key) => {
+      if (!this.zCitekeyToLinks.has(key)) {
+        if (!this.bibCache.has(key)) return;
+        const item = this.bibCache.get(key);
+        const id = item.groupID;
+        if (id === undefined) return;
+        if (!queries[id]) {
+          queries[id] = [];
+        }
+        queries[id].push(key);
+      }
+    });
+
+    for (const id of Object.keys(queries)) {
+      const groupId = Number(id);
+      try {
+        const items = await getItemJSONFromCiteKeys(
+          this.plugin.settings.zoteroPort,
+          queries[groupId],
+          groupId
+        );
+        if (items?.length) {
+          for (const item of items) {
+            const key = item.citekey || item.citationKey;
+            const link = item.select;
+            if (key && link) {
+              this.zCitekeyToLinks.set(key, link);
+            }
+          }
+        }
+      } catch {
+        //
+      }
+    }
   }
 
   prepBibHTML(parsed: HTMLElement, file: TFile, inTooltip?: boolean) {
@@ -633,6 +683,7 @@ export class BibManager {
       div.append(e);
 
       if (e.dataset.citekey) {
+        const zLink = this.zCitekeyToLinks.get(e.dataset.citekey);
         let linkText = '@' + e.dataset.citekey;
         let linkDest = app.metadataCache.getFirstLinkpathDest(
           linkText,
@@ -645,18 +696,29 @@ export class BibManager {
             file.path
           );
         }
-        if (!linkDest) return;
+        if (!linkDest && !zLink) return;
 
-        div.createDiv({}, (div) =>
-          div.createDiv('clickable-icon', (div) => {
-            setIcon(div, 'lucide-file-text');
-            div.setAttr('aria-label', t('Open literature note'));
-            div.onClickEvent((e) => {
-              const newPane = Keymap.isModEvent(e);
-              app.workspace.openLinkText(linkText, file.path, newPane);
+        div.createDiv({ cls: 'pwc-entry-btns' }, (div) => {
+          if (linkDest) {
+            div.createDiv('clickable-icon', (div) => {
+              setIcon(div, 'lucide-file-text');
+              div.setAttr('aria-label', t('Open literature note'));
+              div.onClickEvent((e) => {
+                const newPane = Keymap.isModEvent(e);
+                app.workspace.openLinkText(linkText, file.path, newPane);
+              });
             });
-          })
-        );
+          }
+          if (zLink) {
+            div.createDiv('clickable-icon', (div) => {
+              setIcon(div, 'lucide-external-link');
+              div.setAttr('aria-label', t('Open in Zotero'));
+              div.onClickEvent(() => {
+                activeWindow.open(zLink, '_blank');
+              });
+            });
+          }
+        });
       }
     });
 

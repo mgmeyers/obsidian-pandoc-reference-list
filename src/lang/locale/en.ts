@@ -70,4 +70,5 @@ export default {
 
   // src/view.ts
   'Open literature note': 'Open literature note',
+  'Open in Zotero': 'Open in Zotero',
 };
