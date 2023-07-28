@@ -275,12 +275,13 @@ export class BibManager {
     }
 
     const style =
-      settings.cslStyleURL ??
+      settings.cslStylePath ||
+      settings.cslStyleURL ||
       'https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl';
-    const lang = settings.cslLang ?? 'en-US';
+    const lang = settings.cslLang || 'en-US';
 
     await this.getLangAndStyle(lang, {
-      id: settings.cslStylePath || style,
+      id: style,
       explicitPath: settings.cslStylePath,
     });
     if (!this.styleCache.has(style)) return;
@@ -327,12 +328,13 @@ export class BibManager {
     }
 
     const style =
-      settings.cslStyleURL ??
+      settings.cslStylePath ||
+      settings.cslStyleURL ||
       'https://raw.githubusercontent.com/citation-style-language/styles/master/apa.csl';
-    const lang = settings.cslLang ?? 'en-US';
+    const lang = settings.cslLang || 'en-US';
 
     await this.getLangAndStyle(lang, {
-      id: settings.cslStylePath || style,
+      id: style,
       explicitPath: settings.cslStylePath,
     });
     if (!this.styleCache.has(style)) return;
