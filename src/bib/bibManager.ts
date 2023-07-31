@@ -26,6 +26,7 @@ import { cite } from 'src/parser/citeproc';
 import { setCiteKeyCache } from 'src/editorExtension';
 import equal from 'fast-deep-equal';
 import { t } from 'src/lang/helpers';
+import path from 'path';
 
 const fuseSettings = {
   includeMatches: true,
@@ -136,6 +137,7 @@ export class BibManager {
   engine: any;
 
   zCitekeyToLinks: Map<string, string> = new Map();
+  zCitekeyToPDFLinks: Map<string, string[]> = new Map();
 
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
@@ -652,6 +654,17 @@ export class BibManager {
             const link = item.select;
             if (key && link) {
               this.zCitekeyToLinks.set(key, link);
+              if (item.attachments?.length) {
+                const attLinks: string[] = [];
+                for (const att of item.attachments) {
+                  if (/\.pdf$/.test(att.path)) {
+                    attLinks.push(att.path);
+                  }
+                }
+                if (attLinks.length) {
+                  this.zCitekeyToPDFLinks.set(key, attLinks);
+                }
+              }
             }
           }
         }
@@ -686,6 +699,7 @@ export class BibManager {
 
       if (e.dataset.citekey) {
         const zLink = this.zCitekeyToLinks.get(e.dataset.citekey);
+        const zPDFLinks = this.zCitekeyToPDFLinks.get(e.dataset.citekey);
         let linkText = '@' + e.dataset.citekey;
         let linkDest = app.metadataCache.getFirstLinkpathDest(
           linkText,
@@ -698,12 +712,13 @@ export class BibManager {
             file.path
           );
         }
-        if (!linkDest && !zLink) return;
+
+        if (!linkDest && !zLink && !zPDFLinks) return;
 
         div.createDiv({ cls: 'pwc-entry-btns' }, (div) => {
           if (linkDest) {
             div.createDiv('clickable-icon', (div) => {
-              setIcon(div, 'lucide-file-text');
+              setIcon(div, 'sticky-note');
               div.setAttr('aria-label', t('Open literature note'));
               div.onClickEvent((e) => {
                 const newPane = Keymap.isModEvent(e);
@@ -717,6 +732,17 @@ export class BibManager {
               div.setAttr('aria-label', t('Open in Zotero'));
               div.onClickEvent(() => {
                 activeWindow.open(zLink, '_blank');
+              });
+            });
+          }
+          if (zPDFLinks) {
+            zPDFLinks.forEach((link) => {
+              div.createDiv('clickable-icon', (div) => {
+                setIcon(div, 'lucide-file-text');
+                div.setAttr('aria-label', path.parse(link).base);
+                div.onClickEvent(() => {
+                  activeWindow.open(`file://${encodeURI(link)}`, '_blank');
+                });
               });
             });
           }
