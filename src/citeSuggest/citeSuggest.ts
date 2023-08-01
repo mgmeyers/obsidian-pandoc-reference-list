@@ -99,7 +99,7 @@ export class CiteSuggest extends EditorSuggest<
 
     if (!sugg.matches || !sugg.matches.length) {
       frag.createSpan({ text: `@${item.id}` });
-      frag.createSpan({ text: item.title, cls: 'pwc-suggest-title' });
+      if (item.title) frag.createSpan({ text: item.title, cls: 'pwc-suggest-title' });
       return el.setText(frag);
     }
 
@@ -132,7 +132,7 @@ export class CiteSuggest extends EditorSuggest<
       });
     });
 
-    title.appendText(item.title.substring(prevTitleIndex));
+    if (item.title) title.appendText(item.title.substring(prevTitleIndex));
     citekey.appendText(item.id.substring(prevCiteIndex));
 
     el.setText(frag);
