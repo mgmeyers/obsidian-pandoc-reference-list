@@ -23,15 +23,17 @@ export function processCiteKeys(plugin: ReferenceList) {
     const walker = el.doc.createNodeIterator(el, NodeFilter.SHOW_TEXT);
     const sectionInfo = ctx.getSectionInfo(el);
 
-    if (!sectionInfo) return;
+    if (!sectionInfo && !el.hasClass('markdown-preview-view')) return;
 
-    const sectionCites = plugin.bibManager.getCitationsForSection(
+    // We wont get a sectionInfo in print mode
+    const cache = plugin.bibManager.getCacheForPath(ctx.sourcePath)
+    const sectionCites = sectionInfo ? plugin.bibManager.getCitationsForSection(
       ctx.sourcePath,
       sectionInfo.lineStart,
       sectionInfo.lineEnd
-    );
+    ) : cache?.citations;
 
-    if (!sectionCites.length) return;
+    if (!sectionCites?.length) return;
 
     let node;
     while ((node = walker.nextNode())) {
