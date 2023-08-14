@@ -48,7 +48,7 @@ export default class ReferenceList extends Plugin {
       (leaf: WorkspaceLeaf) => new ReferenceListView(leaf, this)
     );
 
-    this.cacheDir = path.join(getVaultRoot(), './.pandoc');
+    this.cacheDir = path.join(getVaultRoot(), '.pandoc');
     this.emitter = new Events();
     this.bibManager = new BibManager(this);
     this.initPromise = new PromiseCapability();

@@ -242,8 +242,8 @@ export async function getZBib(
 ) {
   const cached = path.join(cacheDir, `zotero-library-${groupId}.json`);
 
+  ensureDir(cacheDir);
   if (!(await isZoteroRunning(port))) {
-    ensureDir(cacheDir);
     if (fs.existsSync(cached)) {
       return applyGroupID(
         JSON.parse(fs.readFileSync(cached).toString()) as CSLList,
