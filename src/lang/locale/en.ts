@@ -78,6 +78,7 @@ export default {
 
   // src/main.ts
   'Open view': 'Open view',
+  'Focus on reference list view': 'Focus on reference list view',
 
   // src/view.ts
   'Open literature note': 'Open literature note',

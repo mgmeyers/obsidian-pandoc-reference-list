@@ -106,6 +106,13 @@ export default class ReferenceList extends Plugin {
         this.initLeaf();
       },
     });
+    this.addCommand({
+      id: "focus-reference-list-view",
+      name: t("Focus on reference list view"),
+      callback: () => {
+        this.activateView();
+      }
+    });
 
     document.body.toggleClass(
       'pwc-tooltips',
@@ -351,4 +358,15 @@ export default class ReferenceList extends Plugin {
       view?.setNoContentMessage();
     }
   };
+  async activateView() {
+    if (this.app.workspace.getLeavesOfType(viewType).length === 0) {
+      await this.app.workspace.getRightLeaf(false).setViewState({
+        type: viewType,
+        active: true,
+      });
+    }
+    this.app.workspace.revealLeaf(
+      this.app.workspace.getLeavesOfType(viewType)[0]
+    );
+  }
 }
