@@ -104,6 +104,7 @@ export default class ReferenceList extends Plugin {
           return this.view === null;
         }
         this.initLeaf();
+        this.activateView();
       },
     });
     this.addCommand({
