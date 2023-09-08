@@ -122,10 +122,12 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
           text
             .setValue(this.plugin.settings.pathToBibliography)
             .onChange((value) => {
+              const prev = this.plugin.settings.pathToBibliography;
               this.plugin.settings.pathToBibliography = value;
-              this.plugin.saveSettings(() =>
-                this.plugin.bibManager.reinit(true)
-              );
+              this.plugin.saveSettings(() => {
+                this.plugin.bibManager.clearWatcher(prev);
+                this.plugin.bibManager.reinit(true);
+              });
             });
         });
 

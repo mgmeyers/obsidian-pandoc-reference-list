@@ -14,11 +14,7 @@ function ensureDir(dir: string) {
   }
 }
 
-export async function bibToCSL(
-  bibPath: string,
-  pathToPandoc: string,
-  getVaultRoot?: () => string
-): Promise<PartialCSLEntry[]> {
+export function getBibPath(bibPath: string, getVaultRoot?: () => string) {
   if (!fs.existsSync(bibPath)) {
     const orig = bibPath;
     if (getVaultRoot) {
@@ -30,6 +26,16 @@ export async function bibToCSL(
       throw new Error(`bibToCSL: cannot access bibliography file '${orig}'.`);
     }
   }
+
+  return bibPath;
+}
+
+export async function bibToCSL(
+  bibPath: string,
+  pathToPandoc: string,
+  getVaultRoot?: () => string
+): Promise<PartialCSLEntry[]> {
+  bibPath = getBibPath(bibPath, getVaultRoot);
 
   const parsed = path.parse(bibPath);
   if (parsed.ext === '.json') {

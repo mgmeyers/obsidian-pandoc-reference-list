@@ -5,6 +5,7 @@ import { PartialCSLEntry } from './types';
 import Fuse from 'fuse.js';
 import {
   bibToCSL,
+  getBibPath,
   getCSLLocale,
   getCSLStyle,
   getItemJSONFromCiteKeys,
@@ -28,6 +29,7 @@ import { setCiteKeyCache } from 'src/editorExtension';
 import equal from 'fast-deep-equal';
 import { t } from 'src/lang/helpers';
 import path from 'path';
+import { FSWatcher, watch } from 'fs';
 
 const fuseSettings = {
   includeMatches: true,
@@ -140,20 +142,43 @@ export class BibManager {
   zCitekeyToLinks: Map<string, string> = new Map();
   zCitekeyToPDFLinks: Map<string, string[]> = new Map();
 
+  watcherCache: Map<string, FSWatcher> = new Map();
+
   constructor(plugin: ReferenceList) {
     this.plugin = plugin;
     this.initPromise = new PromiseCapability();
-    this.fileCache = new LRUCache({ max: 10 });
+    this.fileCache = new LRUCache({
+      max: 10,
+      noDisposeOnSet: true,
+      dispose: (cache) => {
+        if (cache.settings?.bibliography) {
+          this.clearWatcher(cache.settings.bibliography);
+        }
+      },
+    });
   }
 
   destroy() {
     this.fileCache.clear();
+
+    for (const watcher of this.watcherCache.values()) {
+      watcher.close();
+    }
+
+    this.watcherCache.clear();
     this.langCache.clear();
     this.styleCache.clear();
     this.bibCache.clear();
     this.fuse = null;
     this.engine = null;
     this.plugin = null;
+  }
+
+  clearWatcher(path: string) {
+    if (this.watcherCache.has(path)) {
+      this.watcherCache.get(path).close();
+      this.watcherCache.delete(path);
+    }
   }
 
   async reinit(clearCache: boolean) {
@@ -281,6 +306,27 @@ export class BibManager {
       );
 
       this.bibCache = new Map();
+      const bibPath = getBibPath(settings.pathToBibliography, getVaultRoot);
+
+      if (bibPath && !this.watcherCache.has(bibPath)) {
+        let dbTimer = 0;
+        this.watcherCache.set(
+          bibPath,
+          watch(bibPath, (evt) => {
+            if (evt === 'change') {
+              clearTimeout(dbTimer);
+              dbTimer = activeWindow.setTimeout(() => {
+                this.loadGlobalBibFile().then(() => {
+                  this.fileCache.clear();
+                  this.plugin.processReferences();
+                });
+              }, 100);
+            } else {
+              this.clearWatcher(bibPath);
+            }
+          })
+        );
+      }
 
       for (const entry of bib) {
         this.bibCache.set(entry.id, entry);
@@ -401,6 +447,8 @@ export class BibManager {
 
     this.plugin.saveSettings();
     this.updateFuse(modifiedEntries);
+    this.fileCache.clear();
+    this.plugin.processReferences();
   }
 
   buildEngine(
@@ -566,10 +614,35 @@ export class BibManager {
       settings?.style === cachedDoc?.settings?.style &&
       settings?.lang === cachedDoc?.settings?.lang;
 
+    if (!areSettingsEqual && cachedDoc?.settings?.bibliography) {
+      this.clearWatcher(cachedDoc.settings.bibliography);
+    }
+
     const source =
       cachedDoc?.source && areSettingsEqual
         ? cachedDoc.source
         : await this.loadScopedEngine(settings);
+
+    if (settings?.bibliography) {
+      const bibPath = getBibPath(settings.bibliography, getVaultRoot);
+      if (!this.watcherCache.has(bibPath)) {
+        let dbTimer = 0;
+        this.watcherCache.set(
+          bibPath,
+          watch(bibPath, (evt) => {
+            if (evt === 'change') {
+              clearTimeout(dbTimer);
+              dbTimer = activeWindow.setTimeout(() => {
+                this.fileCache.delete(file);
+                this.plugin.processReferences();
+              }, 100);
+            } else {
+              this.clearWatcher(bibPath);
+            }
+          })
+        );
+      }
+    }
 
     const setNull = (): null => {
       const result: FileCache = {
