@@ -9,6 +9,7 @@ import {
   getCSLStyle,
   getItemJSONFromCiteKeys,
   getZBib,
+  refreshZBib,
 } from './helpers';
 import {
   PromiseCapability,
@@ -177,6 +178,18 @@ export class BibManager {
     }
   }
 
+  updateFuse(data: Map<string, PartialCSLEntry>) {
+    if (!this.fuse) return;
+
+    this.fuse.remove((doc) => {
+      return data.has(doc.id);
+    });
+
+    for (const doc of data.values()) {
+      this.fuse.add(doc);
+    }
+  }
+
   async loadScopedEngine(settings: ScopedSettings) {
     if (!settings) return this;
 
@@ -312,14 +325,15 @@ export class BibManager {
           const list = await getZBib(settings.zoteroPort, cacheDir, group.id);
           if (list?.length) {
             bib.push(...list);
-          } else {
-            return;
+            group.lastUpdate = Date.now();
           }
         } catch (e) {
           console.error('Error fetching bibliography from Zotero', e);
-          return;
+          continue;
         }
       }
+
+      this.plugin.saveSettings();
 
       this.bibCache = new Map();
       for (const entry of bib) {
@@ -352,6 +366,41 @@ export class BibManager {
     } catch (e) {
       console.error(e);
     }
+  }
+
+  async refreshGlobalZBib() {
+    const { settings, cacheDir } = this.plugin;
+    if (!settings.zoteroGroups?.length) return;
+
+    const bib: PartialCSLEntry[] = [];
+    const modifiedEntries: Map<string, PartialCSLEntry> = new Map();
+
+    for (const group of settings.zoteroGroups) {
+      try {
+        const res = await refreshZBib(
+          settings.zoteroPort,
+          cacheDir,
+          group.id,
+          group.lastUpdate
+        );
+        if (!res) continue;
+        if (res.list?.length) {
+          bib.push(...res.list);
+          group.lastUpdate = Date.now();
+        }
+
+        for (const [k, v] of res.modified.entries()) {
+          modifiedEntries.set(k, v);
+          this.bibCache.set(k, v);
+        }
+      } catch (e) {
+        console.error('Error fetching bibliography from Zotero', e);
+        continue;
+      }
+    }
+
+    this.plugin.saveSettings();
+    this.updateFuse(modifiedEntries);
   }
 
   buildEngine(

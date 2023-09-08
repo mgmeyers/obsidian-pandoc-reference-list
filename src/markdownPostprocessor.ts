@@ -26,12 +26,14 @@ export function processCiteKeys(plugin: ReferenceList) {
     if (!sectionInfo && !el.hasClass('markdown-preview-view')) return;
 
     // We wont get a sectionInfo in print mode
-    const cache = plugin.bibManager.getCacheForPath(ctx.sourcePath)
-    const sectionCites = sectionInfo ? plugin.bibManager.getCitationsForSection(
-      ctx.sourcePath,
-      sectionInfo.lineStart,
-      sectionInfo.lineEnd
-    ) : cache?.citations;
+    const cache = plugin.bibManager.getCacheForPath(ctx.sourcePath);
+    const sectionCites = sectionInfo
+      ? plugin.bibManager.getCitationsForSection(
+          ctx.sourcePath,
+          sectionInfo.lineStart,
+          sectionInfo.lineEnd
+        )
+      : cache?.citations;
 
     if (!sectionCites?.length) return;
 

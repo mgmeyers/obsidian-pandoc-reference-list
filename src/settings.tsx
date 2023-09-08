@@ -23,6 +23,12 @@ export const DEFAULT_SETTINGS: ReferenceListSettings = {
   zoteroGroups: [],
 };
 
+export interface ZoteroGroup {
+  id: number;
+  name: string;
+  lastUpdate?: number;
+}
+
 export interface ReferenceListSettings {
   pathToPandoc: string;
   pathToBibliography?: string;
@@ -38,7 +44,7 @@ export interface ReferenceListSettings {
 
   pullFromZotero?: boolean;
   zoteroPort?: string;
-  zoteroGroups: Array<{ id: number; name: string }>;
+  zoteroGroups: ZoteroGroup[];
 }
 
 export class ReferenceListSettingsTab extends PluginSettingTab {

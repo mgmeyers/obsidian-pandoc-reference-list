@@ -16,6 +16,8 @@ interface Loading {
   loading: boolean;
 }
 
+const triggerRE = /(^|[ \t\v[\-\r\n;])(@)([\p{L}\p{N}:.#$%&\-+?<>~_/]+)$/u;
+
 export class CiteSuggest extends EditorSuggest<
   Fuse.FuseResult<PartialCSLEntry> | Loading
 > {
@@ -99,7 +101,8 @@ export class CiteSuggest extends EditorSuggest<
 
     if (!sugg.matches || !sugg.matches.length) {
       frag.createSpan({ text: `@${item.id}` });
-      if (item.title) frag.createSpan({ text: item.title, cls: 'pwc-suggest-title' });
+      if (item.title)
+        frag.createSpan({ text: item.title, cls: 'pwc-suggest-title' });
       return el.setText(frag);
     }
 
@@ -138,6 +141,7 @@ export class CiteSuggest extends EditorSuggest<
     el.setText(frag);
   }
 
+  lastSelect: EditorPosition = null;
   selectSuggestion(
     suggestion: Fuse.FuseResult<PartialCSLEntry>,
     event: KeyboardEvent | MouseEvent
@@ -154,62 +158,58 @@ export class CiteSuggest extends EditorSuggest<
       replaceStr = `@${suggestion.item.id}`;
     }
 
-    activeView.editor.replaceRange(
-      replaceStr,
-      this.context.start,
-      this.context.end
-    );
+    const { start, end } = this.context;
 
+    activeView.editor.replaceRange(replaceStr, start, end);
+
+    this.lastSelect = {
+      ch: start.ch + replaceStr.length,
+      line: start.line,
+    };
     this.close();
   }
 
+  isRefreshing: boolean = false;
+  async refreshZBib() {
+    if (this.isRefreshing) return;
+    this.isRefreshing = true;
+    await this.plugin.bibManager.refreshGlobalZBib();
+    this.isRefreshing = false;
+  }
+
   onTrigger(cursor: EditorPosition, editor: Editor): EditorSuggestTriggerInfo {
-    if (!this.plugin.settings.enableCiteKeyCompletion) {
+    const { enableCiteKeyCompletion, pullFromZotero } = this.plugin.settings;
+    if (!enableCiteKeyCompletion) return null;
+
+    const { lastSelect } = this;
+    if (
+      lastSelect &&
+      cursor.ch === lastSelect.ch &&
+      cursor.line === lastSelect.line
+    ) {
       return null;
     }
 
-    const triggerPhrase = '@';
-    let startPos = this.context?.start || {
+    const line = (editor.getLine(cursor.line) || '').substring(0, cursor.ch);
+    const match = line.match(triggerRE);
+
+    if (!match) return null;
+    this.lastSelect = null;
+
+    if (!this.context && pullFromZotero) {
+      this.refreshZBib();
+    }
+
+    const triggerIndex = match.index + match[1].length;
+    const startPos = {
       line: cursor.line,
-      ch: cursor.ch - triggerPhrase.length,
+      ch: triggerIndex,
     };
-
-    if (!editor.getRange(startPos, cursor).startsWith(triggerPhrase)) {
-      const restartPos = {
-        line: cursor.line,
-        ch: cursor.ch - (triggerPhrase.length + 1),
-      };
-
-      if (
-        this.context ||
-        !editor.getRange(restartPos, cursor).startsWith(triggerPhrase)
-      ) {
-        return null;
-      }
-
-      startPos = restartPos;
-    }
-
-    const precedingChar = editor.getRange(
-      {
-        line: startPos.line,
-        ch: startPos.ch - 1,
-      },
-      startPos
-    );
-
-    if (precedingChar && !/[ .[;-]/.test(precedingChar)) {
-      return null;
-    }
-
-    const query = editor
-      .getRange(startPos, cursor)
-      .substring(triggerPhrase.length);
 
     return {
       start: startPos,
       end: cursor,
-      query,
+      query: match[3],
     };
   }
 }
