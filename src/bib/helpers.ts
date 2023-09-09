@@ -307,19 +307,23 @@ function applyGroupID(list: CSLList, groupId: number) {
 export async function getZBib(
   port: string = DEFAULT_ZOTERO_PORT,
   cacheDir: string,
-  groupId: number
+  groupId: number,
+  loadCached?: boolean
 ) {
+  const isRunning = await isZoteroRunning(port);
   const cached = path.join(cacheDir, `zotero-library-${groupId}.json`);
 
   ensureDir(cacheDir);
-  if (!(await isZoteroRunning(port))) {
+  if (loadCached || !isRunning) {
     if (fs.existsSync(cached)) {
       return applyGroupID(
         JSON.parse(fs.readFileSync(cached).toString()) as CSLList,
         groupId
       );
     }
-    return null;
+    if (!isRunning) {
+      return null;
+    }
   }
 
   const bib = await download(

@@ -55,7 +55,7 @@ export default class ReferenceList extends Plugin {
     this.initPromise.promise
       .then(() => {
         if (this.settings.pullFromZotero) {
-          return this.bibManager.loadGlobalZBib();
+          return this.bibManager.loadAndRefreshGlobalZBib();
         } else {
           return this.bibManager.loadGlobalBibFile();
         }

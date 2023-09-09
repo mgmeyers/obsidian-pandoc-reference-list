@@ -360,6 +360,11 @@ export class BibManager {
     }
   }
 
+  async loadAndRefreshGlobalZBib() {
+    await this.loadGlobalZBib(true);
+    await this.refreshGlobalZBib();
+  }
+
   async loadGlobalZBib(fromCache?: boolean) {
     const { settings, cacheDir } = this.plugin;
     if (!settings.zoteroGroups?.length) return;
@@ -368,7 +373,12 @@ export class BibManager {
     if (!fromCache || this.bibCache.size === 0) {
       for (const group of settings.zoteroGroups) {
         try {
-          const list = await getZBib(settings.zoteroPort, cacheDir, group.id);
+          const list = await getZBib(
+            settings.zoteroPort,
+            cacheDir,
+            group.id,
+            fromCache
+          );
           if (list?.length) {
             bib.push(...list);
             group.lastUpdate = Date.now();
