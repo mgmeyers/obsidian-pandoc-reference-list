@@ -187,7 +187,7 @@ export class BibManager {
     if (clearCache) this.bibCache.clear();
 
     if (this.plugin.settings.pullFromZotero) {
-      await this.loadGlobalZBib(true);
+      await this.loadGlobalZBib(false);
     } else {
       await this.loadGlobalBibFile(true);
     }
@@ -370,34 +370,32 @@ export class BibManager {
     if (!settings.zoteroGroups?.length) return;
 
     const bib: PartialCSLEntry[] = [];
-    if (!fromCache || this.bibCache.size === 0) {
-      for (const group of settings.zoteroGroups) {
-        try {
-          const list = await getZBib(
-            settings.zoteroPort,
-            cacheDir,
-            group.id,
-            fromCache
-          );
-          if (list?.length) {
-            bib.push(...list);
-            group.lastUpdate = Date.now();
-          }
-        } catch (e) {
-          console.error('Error fetching bibliography from Zotero', e);
-          continue;
+    for (const group of settings.zoteroGroups) {
+      try {
+        const list = await getZBib(
+          settings.zoteroPort,
+          cacheDir,
+          group.id,
+          fromCache
+        );
+        if (list?.length) {
+          bib.push(...list);
+          group.lastUpdate = Date.now();
         }
+      } catch (e) {
+        console.error('Error fetching bibliography from Zotero', e);
+        continue;
       }
-
-      this.plugin.saveSettings();
-
-      this.bibCache = new Map();
-      for (const entry of bib) {
-        this.bibCache.set(entry.id, entry);
-      }
-
-      this.setFuse(bib);
     }
+
+    this.plugin.saveSettings();
+
+    this.bibCache = new Map();
+    for (const entry of bib) {
+      this.bibCache.set(entry.id, entry);
+    }
+
+    this.setFuse(bib);
 
     const style =
       settings.cslStylePath ||
