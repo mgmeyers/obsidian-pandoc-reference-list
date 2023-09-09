@@ -1,2 +1,1 @@
-8082913 Automatically refresh bib files on file change
-d1f811d Automatically refresh zotero bibliography
+444a757 Improve startup time when pulling bib from Zotero
