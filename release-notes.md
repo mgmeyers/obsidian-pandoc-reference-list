@@ -1,1 +1,1 @@
-444a757 Improve startup time when pulling bib from Zotero
+49e1229 Ensure Zotero bib can be force refreshed
