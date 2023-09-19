@@ -28,6 +28,7 @@ interface State {
   inExplicitKey: boolean;
   inExplicitLocator: boolean;
   inKey: boolean;
+  inLink: boolean;
   inSuffix: boolean;
   seekingSuffix: boolean;
   seekingLocator: boolean;
@@ -46,6 +47,7 @@ function newState(): State {
     inExplicitKey: false,
     inExplicitLocator: false,
     inSuffix: false,
+    inLink: false,
     seekingSuffix: false,
     seekingLocator: false,
     encounteredKey: false,
@@ -361,7 +363,7 @@ export function getCitations(
   };
 }
 
-export function getCitationSegments(str: string) {
+export function getCitationSegments(str: string, ignoreLinks: boolean = false) {
   const segments: Segment[][] = [];
 
   let state: State = null;
@@ -422,6 +424,7 @@ export function getCitationSegments(str: string) {
         state.bracketDepth = 1;
         state.currentSegment = newCurrent(i, c, SegmentType.bracket);
         state.inBrackets = true;
+        if (prev === '[') state.inLink = true;
         continue;
       }
     }
@@ -593,6 +596,14 @@ export function getCitationSegments(str: string) {
       if (c === ']') {
         state.bracketDepth--;
         if (state.bracketDepth === 0) {
+          if (ignoreLinks) {
+            if (state.inLink || next === '(') {
+              state = null;
+              seekState = null;
+              continue;
+            }
+          }
+
           endCurrent(i);
           state.segment.push(newCurrent(i, c, SegmentType.bracket));
 

@@ -595,7 +595,10 @@ export class BibManager {
     await this.plugin.initPromise.promise;
     await this.initPromise.promise;
 
-    const segs = getCitationSegments(content);
+    const segs = getCitationSegments(
+      content,
+      !this.plugin.settings.renderLinkCitations
+    );
     const processed = segs.map((s) => getCitations(s));
 
     if (!processed.length) return null;

@@ -45,6 +45,7 @@ export function processCiteKeys(plugin: ReferenceList) {
 
       let content = node.nodeValue;
       if (node.parentElement.tagName === 'A') {
+        if (!plugin.settings.renderLinkCitations) continue;
         content = `[${content}]`;
       }
 
@@ -52,7 +53,10 @@ export function processCiteKeys(plugin: ReferenceList) {
       let pos = 0;
       let didMatch = false;
 
-      const segments = getCitationSegments(content);
+      const segments = getCitationSegments(
+        content,
+        !plugin.settings.renderLinkCitations
+      );
       for (const match of segments) {
         if (!didMatch) didMatch = true;
 
@@ -75,18 +79,22 @@ export function processCiteKeys(plugin: ReferenceList) {
 
           frag.appendText(preCite);
           const span = frag.createSpan({
-            attr: attr,
+            attr,
             cls: getCiteClass(true, false),
           });
 
-          if (/</.test(rendered.val)) {
-            const parsed = new DOMParser().parseFromString(
-              rendered.val,
-              'text/html'
-            );
-            span.append(...Array.from(parsed.body.childNodes));
+          if (plugin.settings.renderCitationsReadingMode) {
+            if (/</.test(rendered.val)) {
+              const parsed = new DOMParser().parseFromString(
+                rendered.val,
+                'text/html'
+              );
+              span.append(...Array.from(parsed.body.childNodes));
+            } else {
+              span.setText(rendered.val);
+            }
           } else {
-            span.setText(rendered.val);
+            span.append(node.cloneNode());
           }
 
           plugin.tooltipManager.bindPreviewTooltipHandler(span);

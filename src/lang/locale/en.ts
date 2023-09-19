@@ -42,6 +42,17 @@ export default {
   'Zotero port': 'Zotero port',
   "Use 24119 for Juris-M or specify a custom port if you have changed Zotero's default.":
     "Use 24119 for Juris-M or specify a custom port if you have changed Zotero's default.",
+  'Render live preview inline citations':
+    'Render live preview inline citations',
+  'Render reading mode inline citations':
+    'Render reading mode inline citations',
+  'Convert [@pandoc] citations to formatted inline citations in live preview mode.':
+    'Convert [@pandoc] citations to formatted inline citations in live preview mode.',
+  'Convert [@pandoc] citations to formatted inline citations in reading mode.':
+    'Convert [@pandoc] citations to formatted inline citations in reading mode.',
+  'Process citations in links': 'Process citations in links',
+  'Include [[@pandoc]] citations in the reference list and format them as inline citations in live preview mode.':
+    'Include [[@pandoc]] citations in the reference list and format them as inline citations in live preview mode.',
   // src/view.ts
   'Please provide the path to pandoc in the Pandoc Reference List plugin settings.':
     'Please provide the path to pandoc in the Pandoc Reference List plugin settings.',

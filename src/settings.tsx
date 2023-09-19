@@ -21,6 +21,9 @@ export const DEFAULT_SETTINGS: ReferenceListSettings = {
   pathToPandoc: '',
   tooltipDelay: 400,
   zoteroGroups: [],
+  renderCitations: true,
+  renderCitationsReadingMode: true,
+  renderLinkCitations: true,
 };
 
 export interface ZoteroGroup {
@@ -41,6 +44,9 @@ export interface ReferenceListSettings {
   showCitekeyTooltips?: boolean;
   tooltipDelay: number;
   enableCiteKeyCompletion?: boolean;
+  renderCitations?: boolean;
+  renderCitationsReadingMode?: boolean;
+  renderLinkCitations?: boolean;
 
   pullFromZotero?: boolean;
   zoteroPort?: string;
@@ -271,6 +277,54 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
           this.plugin.settings.hideLinks = value;
           this.plugin.saveSettings();
         })
+      );
+
+    new Setting(containerEl)
+      .setName(t('Render live preview inline citations'))
+      .setDesc(
+        t(
+          'Convert [@pandoc] citations to formatted inline citations in live preview mode.'
+        )
+      )
+      .addToggle((text) =>
+        text
+          .setValue(!!this.plugin.settings.renderCitations)
+          .onChange((value) => {
+            this.plugin.settings.renderCitations = value;
+            this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t('Render reading mode inline citations'))
+      .setDesc(
+        t(
+          'Convert [@pandoc] citations to formatted inline citations in reading mode.'
+        )
+      )
+      .addToggle((text) =>
+        text
+          .setValue(!!this.plugin.settings.renderCitationsReadingMode)
+          .onChange((value) => {
+            this.plugin.settings.renderCitationsReadingMode = value;
+            this.plugin.saveSettings();
+          })
+      );
+
+    new Setting(containerEl)
+      .setName(t('Process citations in links'))
+      .setDesc(
+        t(
+          'Include [[@pandoc]] citations in the reference list and format them as inline citations in live preview mode.'
+        )
+      )
+      .addToggle((text) =>
+        text
+          .setValue(!!this.plugin.settings.renderLinkCitations)
+          .onChange((value) => {
+            this.plugin.settings.renderLinkCitations = value;
+            this.plugin.saveSettings();
+          })
       );
 
     new Setting(containerEl)

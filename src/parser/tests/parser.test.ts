@@ -27,6 +27,22 @@ const segmentFixtures: Record<string, Segment[][]> = {
       { from: 13, to: 14, val: ']', type: SegmentType.bracket },
     ],
   ],
+  '[@nonexistent](../hello.md)': [
+    [
+      { from: 0, to: 1, val: '[', type: SegmentType.bracket },
+      { from: 1, to: 2, val: '@', type: SegmentType.at },
+      { from: 2, to: 13, val: 'nonexistent', type: SegmentType.key },
+      { from: 13, to: 14, val: ']', type: SegmentType.bracket },
+    ],
+  ],
+  '[[@nonexistent]]': [
+    [
+      { from: 1, to: 2, val: '[', type: SegmentType.bracket },
+      { from: 2, to: 3, val: '@', type: SegmentType.at },
+      { from: 3, to: 14, val: 'nonexistent', type: SegmentType.key },
+      { from: 14, to: 15, val: ']', type: SegmentType.bracket },
+    ],
+  ],
   '@item1 says blah.': [
     [
       { from: 0, to: 1, val: '@', type: SegmentType.at },
@@ -347,10 +363,19 @@ const segmentFixtures: Record<string, Segment[][]> = {
   ],
 };
 
-describe('getCiteKeys()', () => {
+describe('getCitationSegments()', () => {
   Object.keys(segmentFixtures).forEach((k) => {
     it(k, () => expect(getCitationSegments(k)).toEqual(segmentFixtures[k]));
   });
+});
+
+describe('getCitationSegments(ignoreLinks = true)', () => {
+  it('[[@nonexistent]]', () =>
+    expect(getCitationSegments('[[@nonexistent]]', true)).toEqual([]));
+  it('[@nonexistent](../hello.md)', () =>
+    expect(getCitationSegments('[@nonexistent](../hello.md)', true)).toEqual(
+      []
+    ));
 });
 
 const citationFixtures: Record<string, CitationGroup> = {

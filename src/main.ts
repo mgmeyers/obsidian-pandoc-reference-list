@@ -36,7 +36,14 @@ export default class ReferenceList extends Plugin {
   tooltipManager: TooltipManager;
   cacheDir: string;
   bibManager: BibManager;
-  initPromise: PromiseCapability<void>;
+  _initPromise: PromiseCapability<void>;
+
+  get initPromise() {
+    if (!this._initPromise) {
+      return (this._initPromise = new PromiseCapability());
+    }
+    return this._initPromise;
+  }
 
   async onload() {
     const { app } = this;
@@ -51,7 +58,6 @@ export default class ReferenceList extends Plugin {
     this.cacheDir = path.join(getVaultRoot(), '.pandoc');
     this.emitter = new Events();
     this.bibManager = new BibManager(this);
-    this.initPromise = new PromiseCapability();
     this.initPromise.promise
       .then(() => {
         if (this.settings.pullFromZotero) {

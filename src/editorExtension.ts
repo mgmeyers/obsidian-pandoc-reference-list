@@ -99,7 +99,7 @@ class CiteWidget extends WidgetType {
     return createSpan(
       {
         cls: 'pandoc-citation is-resolved',
-        attr: attr,
+        attr,
       },
       (span) => {
         if (this.linkText) {
@@ -171,10 +171,15 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
       }
     }
     mkDeco(view: EditorView) {
+      const {
+        plugin: { settings },
+      } = view.state.field(bibManagerField);
+
       const b = new RangeSetBuilder<Decoration>();
       const obsView = view.state.field(editorInfoField);
       const citekeyCache = view.state.field(citeKeyCacheField);
-      const isLivePreview = view.state.field(editorLivePreviewField);
+      const isLivePreview =
+        settings.renderCitations && view.state.field(editorLivePreviewField);
 
       // Don't get the syntax tree until we have to
       let tree: Tree;
@@ -183,7 +188,10 @@ export const citeKeyPlugin = ViewPlugin.fromClass(
 
       for (const { from, to } of view.visibleRanges) {
         const range = view.state.sliceDoc(from, to);
-        const segments = getCitationSegments(range);
+        const segments = getCitationSegments(
+          range,
+          !settings.renderLinkCitations
+        );
 
         for (const match of segments) {
           if (!tree) tree = syntaxTree(view.state);
