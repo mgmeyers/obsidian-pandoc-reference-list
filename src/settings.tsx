@@ -61,10 +61,10 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     containerEl.empty();
 
     new Setting(containerEl)
-      .setName(t('Fallback Path to Pandoc'))
+      .setName(t('Fallback path to Pandoc'))
       .setDesc(
         t(
-          "The absolute path to the pandoc executable. This plugin will attempt to locate pandoc for you and will use this path if it fails to do so. To find pandoc, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
+          "The absolute path to the Pandoc executable. This plugin will attempt to locate pandoc for you and will use this path if it fails to do so. To find pandoc, use the output of 'which pandoc' in a terminal on Mac/Linux or 'Get-Command pandoc' in powershell on Windows."
         )
       )
       .then((setting) => {
@@ -79,7 +79,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
         setting.addExtraButton((b) => {
           b.setIcon('magnifying-glass');
-          b.setTooltip(t('Attempt to find pandoc automatically'));
+          b.setTooltip(t('Attempt to find Pandoc automatically'));
           b.onClick(() => {
             which('pandoc')
               .then((pathToPandoc) => {
@@ -109,7 +109,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       });
 
     new Setting(containerEl)
-      .setName(t('Path to Bibliography File'))
+      .setName(t('Path to bibliography file'))
       .setDesc(
         t(
           'The absolute path to your desired bibliography file. This can be overridden on a per-file basis by setting "bibliography" in the file\'s frontmatter.'
@@ -161,7 +161,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     );
 
     ReactDOM.render(
-      <SettingItem name={t('Citation Style')}>
+      <SettingItem name={t('Citation style')}>
         <AsyncSelect
           noOptionsMessage={NoOptionMessage}
           placeholder={t('Search...')}
@@ -183,7 +183,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     );
 
     new Setting(containerEl)
-      .setName(t('Custom Citation Style'))
+      .setName(t('Custom citation style'))
       .setDesc(
         t(
           'Path to a CSL file. This can be an absolute path or one relative to your vault. This will override the style selected above. This can be overridden on a per-file basis by setting "csl" or "citation-style" in the file\'s frontmatter. A URL can be supplied when setting the style via frontmatter.'
@@ -227,7 +227,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
 
     ReactDOM.render(
       <SettingItem
-        name={t('Citation Style Language')}
+        name={t('Citation style language')}
         description={
           <>
             {t(
@@ -264,7 +264,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
     );
 
     new Setting(containerEl)
-      .setName(t('Hide Links in References'))
+      .setName(t('Hide links in references'))
       .setDesc(t('Replace links with link icons to save space.'))
       .addToggle((text) =>
         text.setValue(!!this.plugin.settings.hideLinks).onChange((value) => {
@@ -274,7 +274,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t('Show Citekey Suggestions'))
+      .setName(t('Show citekey suggestions'))
       .setDesc(
         t(
           'When enabled, an autocomplete dialog will display when typing citation keys.'
@@ -290,7 +290,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t('Show Citekey Tooltips'))
+      .setName(t('Show citekey tooltips'))
       .setDesc(
         t(
           'When enabled, hovering over citekeys will open a tooltip containing a formatted citation.'
@@ -306,7 +306,7 @@ export class ReferenceListSettingsTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
-      .setName(t('Tooltip Delay'))
+      .setName(t('Tooltip delay'))
       .setDesc(
         t(
           'Set the amount of time (in milliseconds) to wait before displaying tooltips.'

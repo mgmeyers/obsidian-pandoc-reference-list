@@ -53,7 +53,7 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceList }) {
     <>
       <div className="pwc-setting-item setting-item">
         <SettingItem
-          name={t('Pull Bibliography from Zotero')}
+          name={t('Pull bibliography from Zotero')}
           description={t(
             'When enabled, bibliography data will be pulled from Zotero rather than a bibliography file. The Better Bibtex plugin must be installed in Zotero.'
           )}
@@ -94,7 +94,7 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceList }) {
         <>
           <div className="pwc-setting-item setting-item">
             <SettingItem
-              name={t('Zotero Port')}
+              name={t('Zotero port')}
               description={t(
                 "Use 24119 for Juris-M or specify a custom port if you have changed Zotero's default."
               )}
@@ -111,7 +111,7 @@ export function ZoteroPullSetting({ plugin }: { plugin: ReferenceList }) {
             </SettingItem>
           </div>
           <div className="setting-item pwc-setting-item-wrapper">
-            <SettingItem name={t('Libraries to Include in Bibliography')} />
+            <SettingItem name={t('Libraries to include in bibliography')} />
             {possibleGroups.map((g) => {
               const isEnabled = activeGroups.some((g2) => g2.id === g.id);
               return (

@@ -188,7 +188,7 @@ export default class ReferenceList extends Plugin {
           item
             .setSection('settings')
             .setIcon('lucide-message-square')
-            .setTitle(t('Show Citekey Tooltips'))
+            .setTitle(t('Show citekey tooltips'))
             .setChecked(!!settings.showCitekeyTooltips)
             .onClick(() => {
               this.settings.showCitekeyTooltips = !settings.showCitekeyTooltips;
@@ -199,7 +199,7 @@ export default class ReferenceList extends Plugin {
           item
             .setSection('settings')
             .setIcon('lucide-at-sign')
-            .setTitle(t('Show Citekey Suggestions'))
+            .setTitle(t('Show citekey suggestions'))
             .setChecked(!!settings.enableCiteKeyCompletion)
             .onClick(() => {
               this.settings.enableCiteKeyCompletion =
@@ -211,7 +211,7 @@ export default class ReferenceList extends Plugin {
           item
             .setSection('actions')
             .setIcon('lucide-rotate-cw')
-            .setTitle(t('Refresh Bibliography'))
+            .setTitle(t('Refresh bibliography'))
             .onClick(async () => {
               const activeView =
                 this.app.workspace.getActiveViewOfType(MarkdownView);
