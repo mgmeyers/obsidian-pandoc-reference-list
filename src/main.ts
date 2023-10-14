@@ -97,30 +97,17 @@ export default class ReferenceList extends Plugin {
     });
 
     this.addCommand({
-      id: 'show-reference-list-view',
-      name: t('Open view'),
-      checkCallback: (checking: boolean) => {
-        if (checking) {
-          return this.view === null;
-        }
+      id: 'focus-reference-list-view',
+      name: t('Show reference list'),
+      callback: async () => {
         this.initLeaf();
-        this.activateView();
       },
-    });
-    this.addCommand({
-      id: "focus-reference-list-view",
-      name: t("Focus on reference list view"),
-      callback: () => {
-        this.activateView();
-      }
     });
 
     document.body.toggleClass(
       'pwc-tooltips',
       !!this.settings.showCitekeyTooltips
     );
-
-    app.workspace.onLayoutReady(() => this.initLeaf());
 
     this.registerEvent(
       app.metadataCache.on(
@@ -279,14 +266,28 @@ export default class ReferenceList extends Plugin {
     return leaves[0].view as ReferenceListView;
   }
 
-  initLeaf(): void {
-    if (this.view) {
-      return;
-    }
+  async initLeaf() {
+    if (this.view) return this.revealLeaf();
 
-    this.app.workspace.getRightLeaf(false).setViewState({
+    await this.app.workspace.getRightLeaf(false).setViewState({
       type: viewType,
     });
+
+    this.revealLeaf();
+
+    await this.initPromise.promise;
+    await this.bibManager.initPromise.promise;
+
+    const activeView = this.app.workspace.getActiveViewOfType(MarkdownView);
+    if (activeView) {
+      this.processReferences();
+    }
+  }
+
+  revealLeaf() {
+    const leaves = this.app.workspace.getLeavesOfType(viewType);
+    if (!leaves?.length) return;
+    this.app.workspace.revealLeaf(leaves[0]);
   }
 
   async loadSettings() {
@@ -359,15 +360,4 @@ export default class ReferenceList extends Plugin {
       view?.setNoContentMessage();
     }
   };
-  async activateView() {
-    if (this.app.workspace.getLeavesOfType(viewType).length === 0) {
-      await this.app.workspace.getRightLeaf(false).setViewState({
-        type: viewType,
-        active: true,
-      });
-    }
-    this.app.workspace.revealLeaf(
-      this.app.workspace.getLeavesOfType(viewType)[0]
-    );
-  }
 }

@@ -77,8 +77,7 @@ export default {
   'No citation found for ': 'No citation found for ',
 
   // src/main.ts
-  'Open view': 'Open view',
-  'Focus on reference list view': 'Focus on reference list view',
+  'Show reference list': 'Show reference list',
 
   // src/view.ts
   'Open literature note': 'Open literature note',
