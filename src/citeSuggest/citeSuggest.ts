@@ -16,7 +16,8 @@ interface Loading {
   loading: boolean;
 }
 
-const triggerRE = /(^|[ \t\v[\-\r\n;])(@)([\p{L}\p{N}:.#$%&\-+?<>~_/]+)$/u;
+const triggerRE = /([\s()[\]{}\-;]?)(@)([\p{L}\p{N}:.#$%&\-+?<>~_/]+)$/u;
+const triggerREenhanced = /([\s()[\]{}\-;]?)@"([\p{L}\p{N}:.#$%&\-+?<>~_/ ]+)"$/u;
 
 export class CiteSuggest extends EditorSuggest<
   Fuse.FuseResult<PartialCSLEntry> | Loading
@@ -58,8 +59,7 @@ export class CiteSuggest extends EditorSuggest<
   getSuggestions(context: EditorSuggestContext) {
     if (
       !context.query ||
-      context.query.length < 2 ||
-      context.query.includes(' ')
+      context.query.length < 2
     ) {
       return null;
     }
@@ -75,9 +75,15 @@ export class CiteSuggest extends EditorSuggest<
       fuse = cache.source.fuse;
     }
 
-    const results = fuse?.search(context.query, {
-      limit: this.limit,
-    });
+    const queries = context.query.split(" ").filter(element => element.trim() !== "")
+    const results = fuse?.search(
+      {
+        $or: [
+          { $and: queries.map(s => ({ id: s })) },
+          { $and: queries.map(s => ({ title: s })) }
+        ]
+      },
+      { limit: this.limit });
 
     return results?.length ? results : null;
   }
@@ -112,8 +118,22 @@ export class CiteSuggest extends EditorSuggest<
     let prevTitleIndex = 0;
     let prevCiteIndex = 0;
 
-    sugg.matches.forEach((m) => {
-      m.indices.forEach((indices) => {
+    // select first matches for each distinct key
+    const matches_by_key = sugg.matches.filter((obj, index, array) => {
+      return array.findIndex(o => o.key === obj.key) === index;
+    });
+    // and add all matched indices across all matches to the selected matches
+    matches_by_key.forEach(match => {
+      const indices: Fuse.RangeTuple[] = []
+      sugg.matches.filter(m => m.key == match.key).forEach(m => indices.push(...m.indices))
+      match.indices = indices
+    })
+
+    // for each key, merge all overlapping match intervals and highlight these in the suggestion box
+    matches_by_key.forEach(m => {
+      const mergedIntervals: Fuse.RangeTuple[] = this.mergeIntervals(m.indices);
+
+      mergedIntervals.forEach((indices) => {
         const start = indices[0];
         const stop = indices[1] + 1;
 
@@ -142,6 +162,24 @@ export class CiteSuggest extends EditorSuggest<
   }
 
   lastSelect: EditorPosition = null;
+  private mergeIntervals(intervals: readonly Fuse.RangeTuple[]) {
+    if (intervals.length == 0) return null
+    intervals = [...intervals].sort((a, b) => a[0] - b[0]);
+    const mergedIntervals: Fuse.RangeTuple[] = [intervals[0]];
+
+    for (let i = 1; i < intervals.length; i++) {
+      const currentInterval = intervals[i];
+      const lastMergedInterval = mergedIntervals[mergedIntervals.length - 1];
+
+      if (currentInterval[0] <= lastMergedInterval[1]) {
+        lastMergedInterval[1] = Math.max(lastMergedInterval[1], currentInterval[1]);
+      } else {
+        mergedIntervals.push(currentInterval);
+      }
+    }
+    return mergedIntervals;
+  }
+
   selectSuggestion(
     suggestion: Fuse.FuseResult<PartialCSLEntry>,
     event: KeyboardEvent | MouseEvent
@@ -159,6 +197,9 @@ export class CiteSuggest extends EditorSuggest<
     }
 
     const { start, end } = this.context;
+    end.ch = start.ch + this.context.query.length + 1
+    if (this.context.editor.getLine(start.line)[start.ch + 1] == "\"")
+      end.ch = end.ch + 2
 
     activeView.editor.replaceRange(replaceStr, start, end);
 
@@ -190,9 +231,33 @@ export class CiteSuggest extends EditorSuggest<
       return null;
     }
 
-    const line = (editor.getLine(cursor.line) || '').substring(0, cursor.ch);
-    const match = line.match(triggerRE);
+    let match: RegExpMatchArray = null
+    let query: string = null
+    let start_index = -1
+    
+    // match line at cursor position to a citekey query
+    const line = (editor.getLine(cursor.line) || '')
+    if (line == '') return null;
+    const citekey_start = line.substring(0, cursor.ch).lastIndexOf("@\"");
+    const citekey_end = line.substring(citekey_start+2).indexOf("\"") + citekey_start+2
+    if (citekey_start > -1 && citekey_end > -1 && (citekey_start + 2 <= cursor.ch && cursor.ch <= citekey_end)) {
+      match = line.substring(0, citekey_end + 1).match(triggerREenhanced);
+      // ensure only allowed tokens follow the closing quote
+      if (line.substring(citekey_end + 1).match(/[^\s()[\]{}\-;]/u)) return null;
 
+      if (match) {
+        query = match[2];
+        start_index = citekey_start
+      }
+    }
+    else {
+      match = line.substring(0, cursor.ch).match(triggerRE);
+      if (match) {
+        query = match[3];
+        start_index = match.index + match[1].length;
+      }
+    }
+    
     if (!match) return null;
     this.lastSelect = null;
 
@@ -200,16 +265,10 @@ export class CiteSuggest extends EditorSuggest<
       this.refreshZBib();
     }
 
-    const triggerIndex = match.index + match[1].length;
-    const startPos = {
-      line: cursor.line,
-      ch: triggerIndex,
-    };
-
     return {
-      start: startPos,
+      start: { line: cursor.line, ch: start_index},
       end: cursor,
-      query: match[3],
+      query: query
     };
   }
 }
