@@ -466,7 +466,9 @@ export async function getItemJSONFromCiteKeys(
       return null;
     }
 
-    return JSON.parse(res.result[2]).items;
+    return Array.isArray(res.result)
+      ? JSON.parse(res.result[2]).items
+      : JSON.parse(res.result).items;
   } catch (e) {
     console.error(e);
     return null;
