@@ -61,7 +61,7 @@ const alphaNumeric = /[\p{L}\p{N}]/u;
 const punct = /[:.#$%&\-+?<>~_/]/;
 const nonKeyPunct = /\p{P}/u;
 const space = /[ \t\v]/;
-const preKey = /[ \t\v[\-\r\n;]/;
+const preKey = /[\s()[\]{}\-;]/;
 const locatorRe =
   /^((?:[[(]?[a-z\p{N}]+[\])]?[-—:][[(]?[a-z\p{N}]+[\])]?|[a-z\p{N}()[\]]*\p{N}+[a-z\p{N}()[\]]*|[mdclxvi]+)(?:[ \t]*,[ \t]*(?:[[(]?[a-z\p{N}]+[\])]?[-—:][[(]?[a-z\p{N}]+[\])]?|[a-z\p{N}()[\]]*\p{N}+[a-z\p{N}()[\]]*|[mdclxvi]+))*)/iu;
 

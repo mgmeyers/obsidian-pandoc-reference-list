@@ -35,6 +35,9 @@ const fuseSettings = {
   includeMatches: true,
   threshold: 0.35,
   minMatchCharLength: 2,
+  ignoreLocation: true,
+  ignoreFieldNorm: true,
+  useExtendedSearch: true,
   keys: [
     { name: 'id', weight: 0.7 },
     { name: 'title', weight: 0.3 },
