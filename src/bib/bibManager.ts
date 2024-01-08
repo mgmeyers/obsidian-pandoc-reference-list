@@ -29,7 +29,7 @@ import { setCiteKeyCache } from 'src/editorExtension';
 import equal from 'fast-deep-equal';
 import { t } from 'src/lang/helpers';
 import path from 'path';
-import { FSWatcher, watch } from 'fs';
+import { FSWatcher, watch, existsSync } from 'fs';
 
 const fuseSettings = {
   includeMatches: true,
@@ -86,6 +86,11 @@ function getScopedSettings(file: TFile): ScopedSettings {
 
   if (Object.values(output).every((v) => !v)) {
     return null;
+  }
+
+  // Checks whether the bibliography is a relative path and replaces the path with an absolute one
+  if (existsSync(path.join(getVaultRoot(), path.dirname(file.path), output.bibliography))){
+    output.bibliography = path.join(getVaultRoot(), path.dirname(file.path), output.bibliography);
   }
 
   return output;

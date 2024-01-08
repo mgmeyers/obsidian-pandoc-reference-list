@@ -20,7 +20,7 @@ export function getBibPath(bibPath: string, getVaultRoot?: () => string) {
     if (getVaultRoot) {
       bibPath = path.join(getVaultRoot(), bibPath);
       if (!fs.existsSync(bibPath)) {
-        throw new Error(`bibToCSL: cannot access bibliography file '${orig}'.`);
+        throw new Error(`bibToCSL: cannot access bibliography file '${bibPath}'.`);
       }
     } else {
       throw new Error(`bibToCSL: cannot access bibliography file '${orig}'.`);
